@@ -1,0 +1,2519 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PT Manager</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff6b00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PT Manager">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0d0d;
+  --surface: #181818;
+  --surface2: #222222;
+  --surface3: #2a2a2a;
+  --border: #333333;
+  --accent: #ff6b00;
+  --accent2: #ff8c3a;
+  --accent-glow: rgba(255,107,0,.18);
+  --text: #f5f5f5;
+  --muted: #888888;
+  --muted2: #555555;
+  --danger: #ff3b3b;
+  --success: #2ecc71;
+  --warning: #f39c12;
+  --info: #3498db;
+  --radius: 18px;
+  --radius-sm: 12px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; }
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+input, select, textarea {
+  background: var(--surface2); border: 1.5px solid var(--border); color: var(--text);
+  padding: 11px 16px; border-radius: var(--radius-sm); font-family: inherit; font-size: 14px; width: 100%;
+  outline: none; transition: border-color .2s, box-shadow .2s;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); }
+select option { background: var(--surface2); }
+button { cursor: pointer; font-family: inherit; transition: all .18s; }
+.btn { padding: 11px 22px; border-radius: 50px; font-size: 14px; font-weight: 600; border: none; display: inline-flex; align-items: center; gap: 7px; }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 4px 16px rgba(255,107,0,.35); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 22px rgba(255,107,0,.5); }
+.btn-secondary { background: var(--surface2); color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { background: var(--surface3); border-color: var(--accent); color: var(--accent); }
+.btn-danger { background: transparent; color: var(--danger); border: 1.5px solid var(--danger); border-radius: 50px; }
+.btn-danger:hover { background: rgba(255,59,59,.1); }
+.btn-success { background: linear-gradient(135deg,#27ae60,var(--success)); color:#fff; box-shadow:0 4px 14px rgba(46,204,113,.3); border:none; border-radius:50px; }
+.btn-success:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(46,204,113,.45); }
+.btn-sm { padding: 7px 16px; font-size: 12px; }
+.btn-ghost { background: transparent; border: none; color: var(--muted); padding: 6px 10px; border-radius: 50px; }
+.btn-ghost:hover { color: var(--text); background: var(--surface2); }
+.btn-orange-outline { background: transparent; color: var(--accent); border: 1.5px solid var(--accent); border-radius: 50px; }
+.btn-orange-outline:hover { background: var(--accent-glow); }
+.card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 22px; transition: border-color .2s; }
+.field { margin-bottom: 16px; }
+.field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 7px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 50px; font-size: 11px; font-weight: 600; }
+#app { display: flex; min-height: 100vh; }
+#sidebar { width: 230px; background: var(--surface); border-right: 1.5px solid var(--border); display: flex; flex-direction: column; padding: 0; position: sticky; top: 0; height: 100vh; flex-shrink: 0; overflow: hidden; }
+.sidebar-logo { padding: 28px 24px 22px; border-bottom: 1.5px solid var(--border); margin-bottom: 12px; background: linear-gradient(180deg, rgba(255,107,0,.08) 0%, transparent 100%); }
+.logo-pt { font-family: 'Bebas Neue'; font-size: 42px; letter-spacing: 3px; color: var(--accent); line-height: 1; text-shadow: 0 0 30px rgba(255,107,0,.4); }
+.logo-sub { font-size: 10px; color: var(--muted); font-weight: 600; letter-spacing: 3px; margin-top: 2px; }
+#main { flex: 1; padding: 32px; overflow: auto; min-width: 0; }
+.nav-item { display: flex; align-items: center; gap: 12px; padding: 13px 24px; border: none; background: transparent; color: var(--muted); font-size: 14px; font-weight: 500; cursor: pointer; width: 100%; text-align: left; transition: all .18s; position: relative; }
+.nav-item::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 0; background: var(--accent); border-radius: 0 3px 3px 0; transition: height .2s; }
+.nav-item.active { color: var(--text); background: rgba(255,107,0,.08); font-weight: 600; }
+.nav-item.active::before { height: 60%; }
+.nav-item:hover:not(.active) { color: var(--text); background: var(--surface2); }
+.nav-icon { font-size: 20px; width: 24px; text-align: center; }
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,.8); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; backdrop-filter: blur(4px); }
+.modal { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); width: 100%; max-width: 540px; max-height: 92vh; overflow: auto; box-shadow: 0 24px 80px rgba(0,0,0,.6); }
+.modal-header { display: flex; justify-content: space-between; align-items: center; padding: 22px 26px; border-bottom: 1.5px solid var(--border); background: linear-gradient(135deg, rgba(255,107,0,.06) 0%, transparent 60%); }
+.modal-header span { font-family: 'Bebas Neue'; font-size: 24px; letter-spacing: 1.5px; }
+.modal-close { background: var(--surface2); border: none; color: var(--muted); font-size: 18px; cursor: pointer; width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.modal-close:hover { background: var(--danger); color: #fff; }
+.modal-body { padding: 26px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7,1fr); gap: 5px; }
+.cal-day-header { text-align: center; font-size: 10px; color: var(--muted); font-weight: 700; padding: 6px 0; text-transform: uppercase; letter-spacing: .5px; }
+.cal-cell { min-height: 54px; padding: 7px; border-radius: var(--radius-sm); cursor: pointer; border: 1.5px solid transparent; transition: all .15s; }
+.cal-cell:hover { background: var(--surface2); }
+.cal-cell.today { border-color: rgba(255,107,0,.4); background: rgba(255,107,0,.06); }
+.cal-cell.selected { background: var(--accent); border-color: var(--accent); box-shadow: 0 4px 16px rgba(255,107,0,.4); }
+.cal-cell.selected .cal-num { color: #fff; font-weight: 700; }
+.cal-num { font-size: 13px; font-weight: 600; }
+.cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); display: inline-block; margin: 1px; }
+.cal-cell.selected .cal-dot { background: rgba(255,255,255,.7); }
+.stats-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 26px; }
+.stat-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 20px 22px; flex: 1; min-width: 130px; }
+.stat-icon { font-size: 28px; }
+.stat-value { font-family: 'Bebas Neue'; font-size: 30px; letter-spacing: 1px; margin-top: 8px; line-height: 1; }
+.stat-label { font-size: 12px; color: var(--muted); margin-top: 4px; font-weight: 500; }
+.progress-wrap { height: 8px; background: var(--surface3); border-radius: 50px; overflow: hidden; margin-top: 16px; }
+.progress-bar { height: 100%; border-radius: 50px; transition: width .4s cubic-bezier(.4,0,.2,1); }
+.row-item { display: flex; justify-content: space-between; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border); font-size: 14px; gap: 10px; }
+.row-item:last-child { border-bottom: none; }
+.avatar { width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg,rgba(255,107,0,.2),rgba(255,107,0,.06)); border: 1.5px solid rgba(255,107,0,.3); display: flex; align-items: center; justify-content: center; color: var(--accent); font-weight: 700; font-size: 18px; flex-shrink: 0; }
+.avatar-lg { width: 58px; height: 58px; font-size: 24px; }
+.seduta-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; margin-bottom: 8px; display: flex; align-items: flex-start; gap: 12px; }
+.seduta-num { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); color: #fff; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-family: 'Bebas Neue'; font-size: 14px; }
+/* Prevent horizontal scroll everywhere */
+html, body { max-width: 100vw; overflow-x: hidden; }
+* { min-width: 0; }
+
+@media (max-width: 900px) {
+  #cal-layout { grid-template-columns: 1fr !important; }
+  #dash-grids { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 700px) {
+  /* Sidebar → bottom nav */
+  #sidebar { display: none; }
+  #main { padding: 72px 12px 90px; width: 100%; max-width: 100vw; overflow-x: hidden; }
+
+  /* Bottom nav */
+  #bottom-nav { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1.5px solid var(--border); z-index: 900; padding: 6px 0 max(6px, env(safe-area-inset-bottom)); justify-content: space-around; }
+  .bnav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border: none; background: transparent; color: var(--muted); font-size: 9px; font-weight: 600; cursor: pointer; transition: all .15s; flex: 1; }
+  .bnav-icon { font-size: 20px; line-height: 1; }
+  .bnav-item.active { color: var(--accent); }
+  .bnav-item.active .bnav-icon { filter: drop-shadow(0 0 6px rgba(255,107,0,.6)); }
+
+  /* Mobile header */
+  #mobile-header { display: flex !important; }
+
+  /* Typography */
+  .page-title { font-size: 26px; margin-bottom: 14px; }
+  .section-label { font-size: 10px; letter-spacing: 3px; }
+
+  /* Cards */
+  .card { padding: 14px; border-radius: var(--radius-sm); }
+
+  /* All grids → single column */
+  .grid2, .grid3 { grid-template-columns: 1fr !important; }
+  #dash-grids { grid-template-columns: 1fr !important; }
+  #clients-grid { grid-template-columns: 1fr !important; }
+  #cal-layout { grid-template-columns: 1fr !important; }
+
+  /* Stats: 2 per row */
+  .stats-grid { gap: 8px; flex-wrap: wrap; }
+  .stat-card { min-width: calc(50% - 4px); max-width: calc(50% - 4px); flex: 0 0 calc(50% - 4px); padding: 12px; }
+  .stat-value { font-size: 22px; }
+  .stat-icon { font-size: 22px; }
+
+  /* Modals → full bottom sheet */
+  .overlay { padding: 0; align-items: flex-end; }
+  .modal { border-radius: var(--radius) var(--radius) 0 0; max-height: 92vh; max-width: 100vw !important; width: 100%; overflow-y: auto; }
+  .modal-body { padding: 18px; }
+  .modal-header { padding: 16px 18px; }
+
+  /* Flex rows → wrap */
+  .flex-between { flex-wrap: wrap; gap: 8px; }
+  .flex-gap { flex-wrap: wrap; gap: 8px; }
+
+  /* Prevent overflow in row-items */
+  .row-item { flex-wrap: wrap; gap: 6px; }
+  .row-item span { word-break: break-word; }
+
+  /* Buttons full width in some contexts */
+  .btn { white-space: nowrap; }
+
+  /* Client detail: stack columns */
+  #client-detail .grid2-detail { grid-template-columns: 1fr !important; }
+
+  /* Calendar week view: scrollable */
+  #cal-grid-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* Chips: horizontal scroll */
+  .chips-row { overflow-x: auto; flex-wrap: nowrap !important; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .chips-row::-webkit-scrollbar { display: none; }
+
+  /* Stats page charts */
+  #stats-days { grid-template-columns: repeat(7,1fr) !important; gap: 4px !important; }
+
+  /* Packages action buttons: wrap */
+  .pkg-actions { flex-wrap: wrap; gap: 8px; }
+
+  /* Input font size ≥ 16px prevents iOS zoom */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* No horizontal overflow on cards with long text */
+  .card * { max-width: 100%; word-break: break-word; }
+
+  /* Bebas font smaller on small screens */
+  .bebas { letter-spacing: 0.5px; }
+}
+.hidden { display: none !important; }
+.page { display: none; }
+.page.active { display: block; }
+.section-label { font-family: 'Bebas Neue'; font-size: 12px; letter-spacing: 4px; color: var(--muted); margin-bottom: 2px; }
+.page-title { font-family: 'Bebas Neue'; font-size: 42px; letter-spacing: 2px; line-height: 1; margin-bottom: 28px; }
+.empty-state { text-align: center; color: var(--muted); padding: 48px 0; font-size: 14px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+.flex-gap { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.mb16{margin-bottom:16px}.mb24{margin-bottom:24px}.mt12{margin-top:12px}
+.text-muted{color:var(--muted)}.text-accent{color:var(--accent)}.text-success{color:var(--success)}.text-danger{color:var(--danger)}
+.bebas{font-family:'Bebas Neue';letter-spacing:1px}
+.divider{height:1px;background:var(--border);margin:16px 0;}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:6px 16px;border-radius:50px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:transparent;color:var(--muted);transition:all .15s;}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.chip:hover:not(.active){border-color:var(--accent);color:var(--accent);}
+.section-box{background:var(--surface2);border-radius:var(--radius-sm);padding:16px 18px;margin-bottom:18px;}
+.section-box-title{font-size:11px;color:var(--accent);font-weight:700;letter-spacing:2px;margin-bottom:14px;}
+
+/* Native date/time pickers */
+input[type="date"], input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+  position: relative;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  opacity: 0.6;
+  filter: invert(1);
+}
+input[type="date"]:focus::-webkit-calendar-picker-indicator,
+input[type="time"]:focus::-webkit-calendar-picker-indicator {
+  opacity: 1;
+}
+
+</style>
+</head>
+<body>
+
+<!-- MOBILE HEADER -->
+<div id="mobile-header" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--surface);border-bottom:1.5px solid var(--border);padding:12px 18px;align-items:center;justify-content:space-between;">
+  <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:3px;color:var(--accent)">PT <span style="color:var(--text);font-size:20px" id="mobile-page-title">MANAGER</span></div>
+  <div style="display:flex;gap:8px"><button onclick="toggleGlobalSearch()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:7px 12px;font-size:16px;font-family:inherit;cursor:pointer;">🔍</button><button onclick="openBackupModal()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">💾</button></div>
+</div>
+
+<div id="app">
+
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-pt">PT</div>
+    <div class="logo-sub logo-pt-text">MANAGER</div>
+  </div>
+  <button class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard"><span class="nav-icon">⚡</span><span class="nav-label">Dashboard</span></button>
+  <button class="nav-item" onclick="navigate('stats')" id="nav-stats"><span class="nav-icon">📊</span><span class="nav-label">Statistiche</span></button>
+  <button class="nav-item" onclick="navigate('calendar')" id="nav-calendar"><span class="nav-icon">📅</span><span class="nav-label">Calendario</span></button>
+  <button class="nav-item" onclick="navigate('clients')" id="nav-clients"><span class="nav-icon">👥</span><span class="nav-label">Clienti</span></button>
+  <button class="nav-item" onclick="navigate('packages')" id="nav-packages"><span class="nav-icon">📦</span><span class="nav-label">Pacchetti</span></button>
+  <button class="nav-item" onclick="navigate('accounting')" id="nav-accounting"><span class="nav-icon">💶</span><span class="nav-label">Contabilità</span></button>
+  <button class="nav-item" onclick="navigate('leads')" id="nav-leads"><span class="nav-icon">🎯</span><span class="nav-label">Fitactive</span></button>
+  <button class="nav-item" onclick="navigate('settings')" id="nav-settings"><span class="nav-icon">⚙️</span><span class="nav-label">Impostazioni</span></button>
+  <button class="nav-item" onclick="toggleGlobalSearch()" style="margin-top:auto"><span class="nav-icon">🔍</span><span class="nav-label">Cerca</span></button>
+</nav>
+
+<main id="main">
+
+  <div id="page-dashboard" class="page active">
+    <div class="section-label">BENVENUTO</div>
+    <div class="page-title">DASHBOARD <span style="color:var(--accent)">PT</span></div>
+    <div class="stats-grid" id="dash-stats"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+      <div class="card"><div class="bebas" style="font-size:16px;color:var(--muted);margin-bottom:14px;letter-spacing:2px" id="dash-today-title">OGGI</div><div id="dash-today-list"></div></div>
+      <div class="card"><div class="bebas" style="font-size:16px;color:var(--muted);margin-bottom:14px;letter-spacing:2px">PROSSIMI</div><div id="dash-upcoming-list"></div></div>
+    </div>
+  </div>
+
+  <div id="page-calendar" class="page">
+    <div class="section-label">CALENDARIO</div>
+    <div style="display:grid;grid-template-columns:1fr 320px;gap:22px;margin-top:8px" id="cal-layout">
+      <div class="card">
+        <div class="flex-between mb16">
+          <span class="bebas" style="font-size:26px;letter-spacing:2px" id="cal-title"></span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <div style="display:flex;background:var(--surface2);border-radius:50px;padding:3px;border:1px solid var(--border)">
+              <button id="view-month-btn" onclick="setCalView('month')" style="border:none;border-radius:50px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;background:var(--accent);color:#fff;font-family:inherit">Mese</button>
+              <button id="view-week-btn" onclick="setCalView('week')" style="border:none;border-radius:50px;padding:5px 14px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:var(--muted);font-family:inherit">Settimana</button>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="calPrev()">‹</button>
+            <button class="btn btn-secondary btn-sm" onclick="calNext()">›</button>
+          </div>
+        </div>
+        <div id="cal-grid-wrap"><div class="cal-grid" id="cal-grid"></div></div>
+      </div>
+      <div>
+        <div class="flex-between mb16">
+          <span class="bebas" style="font-size:20px" id="cal-selected-title"></span>
+          <button class="btn btn-primary btn-sm" onclick="openSessionModal()">+ Sessione</button>
+        </div>
+        <div id="cal-day-sessions"></div>
+        <!-- SYNC PANEL -->
+        <div class="card" style="margin-top:14px;background:var(--surface2);border-color:var(--border)">
+          <div class="bebas" style="font-size:13px;letter-spacing:2px;color:var(--muted);margin-bottom:14px">🔄 SINCRONIZZA CALENDARIO</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            <button onclick="exportAllICS()" style="display:flex;align-items:center;gap:10px;background:rgba(255,107,0,.08);border:1.5px solid var(--accent);color:var(--text);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;width:100%">
+              <span style="font-size:22px">📱</span>
+              <div><div style="font-weight:700">Esporta su Calendario iPhone</div><div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:2px">Scarica file .ICS → apri → aggiungi a Apple Calendar</div></div>
+            </button>
+            <button onclick="openAllGoogleCalendar()" style="display:flex;align-items:center;gap:10px;background:rgba(66,133,244,.08);border:1.5px solid #4285f4;color:var(--text);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;width:100%">
+              <span style="font-size:22px">📅</span>
+              <div><div style="font-weight:700">Sincronizza con Google Calendar</div><div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:2px">Apre ogni sessione futura su Google Calendar</div></div>
+            </button>
+            <button onclick="copyCalendarURL()" style="display:flex;align-items:center;gap:10px;background:rgba(46,204,113,.08);border:1.5px solid var(--success);color:var(--text);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;text-align:left;width:100%">
+              <span style="font-size:22px">🔗</span>
+              <div><div style="font-weight:700">Esporta tutto il calendario</div><div style="font-size:11px;color:var(--muted);font-weight:400;margin-top:2px">File .ICS con tutte le sessioni passate e future</div></div>
+            </button>
+          </div>
+          <div id="sync-status" style="display:none;margin-top:12px;padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;text-align:center"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="page-clients" class="page">
+    <div class="section-label">GESTIONE</div>
+    <div id="client-detail" class="hidden"></div>
+    <div id="client-list-view">
+      <div class="flex-between mb24" style="margin-top:4px">
+        <div class="page-title" style="margin-bottom:0">CLIENTI</div>
+        <div class="flex-gap">
+          <input id="client-search" placeholder="🔍 Cerca..." style="max-width:220px;border-radius:50px" oninput="renderClients()">
+          <button class="btn btn-primary" onclick="openClientModal()">+ Nuovo</button>
+        </div>
+      </div>
+      <div id="clients-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px"></div>
+    </div>
+  </div>
+
+  <div id="page-packages" class="page">
+    <div class="section-label">GESTIONE</div>
+    <div class="flex-between" style="margin-top:4px;margin-bottom:20px">
+      <div class="page-title" style="margin-bottom:0">PACCHETTI</div>
+      <button class="btn btn-primary" onclick="openPackageModal()">+ Nuovo pacchetto</button>
+    </div>
+    <div class="flex-gap chips-row mb24">
+      <button class="chip active" onclick="setPkgFilter('tutti')" id="pkg-f-tutti">Tutti</button>
+      <button class="chip" onclick="setPkgFilter('attivo')" id="pkg-f-attivo">✅ Attivi</button>
+      <button class="chip" onclick="setPkgFilter('scaduto')" id="pkg-f-scaduto">❌ Scaduti</button>
+      <button class="chip" onclick="setPkgFilter('sospeso')" id="pkg-f-sospeso">⏸ Sospesi</button>
+    </div>
+    <div id="packages-list" style="display:flex;flex-direction:column;gap:14px"></div>
+  </div>
+
+  <div id="page-accounting" class="page">
+    <div class="section-label">GESTIONE</div>
+    <div class="flex-between" style="margin-top:4px;margin-bottom:20px">
+      <div class="page-title" style="margin-bottom:0">CONTABILITÀ</div>
+      <button class="btn btn-primary" onclick="openTransactionModal()">+ Movimento</button>
+    </div>
+    <div class="stats-grid mb24" id="acc-stats"></div>
+    <div class="flex-gap mb16">
+      <select id="acc-month" onchange="renderAccounting()" style="width:160px;border-radius:50px"></select>
+      <select id="acc-year" onchange="renderAccounting()" style="width:100px;border-radius:50px"></select>
+    </div>
+    <div class="card"><div id="acc-list"></div></div>
+  </div>
+
+<!-- BOTTOM NAV (mobile only) -->
+<div id="bottom-nav" style="display:none">
+  <button class="bnav-item active" onclick="navigate('dashboard')" id="bnav-dashboard"><span class="bnav-icon">⚡</span>Home</button>
+  <button class="bnav-item" onclick="navigate('stats')" id="bnav-stats"><span class="bnav-icon">📊</span>Stats</button>
+  <button class="bnav-item" onclick="navigate('calendar')" id="bnav-calendar"><span class="bnav-icon">📅</span>Agenda</button>
+  <button class="bnav-item" onclick="navigate('clients')" id="bnav-clients"><span class="bnav-icon">👥</span>Clienti</button>
+  <button class="bnav-item" onclick="navigate('packages')" id="bnav-packages"><span class="bnav-icon">📦</span>Pacchetti</button>
+  <button class="bnav-item" onclick="navigate('accounting')" id="bnav-accounting"><span class="bnav-icon">💶</span>Cassa</button>
+  <button class="bnav-item" onclick="navigate('leads')" id="bnav-leads"><span class="bnav-icon">🎯</span>Leads</button>
+  <button class="bnav-item" onclick="navigate('settings')" id="bnav-settings"><span class="bnav-icon">⚙️</span>Config</button>
+</div>
+
+<!-- BACKUP MODAL -->
+<div id="backup-modal" class="overlay hidden">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header"><span>💾 BACKUP DATI</span><button class="modal-close" onclick="document.getElementById('backup-modal').classList.add('hidden')">✕</button></div>
+    <div class="modal-body">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:16px;margin-bottom:20px;font-size:14px;line-height:1.8">
+        <div style="font-weight:700;margin-bottom:8px;color:var(--accent)">📌 Dove sono salvati i tuoi dati?</div>
+        I dati sono nel <b>localStorage</b> del browser del tuo telefono: salvati localmente, <b>non in cloud</b>, nessuno può vederli.<br><br>
+        <span style="color:var(--warning)">⚠️ Attenzione: se svuoti la cache del browser o reinstalli l'app, i dati si perdono!</span><br><br>
+        <span style="color:var(--success)">✅ Soluzione: scarica un backup JSON regolarmente e conservalo.</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <button onclick="exportBackup()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:50px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">⬇️ Scarica backup (JSON)</button>
+        <button onclick="document.getElementById('import-file').click()" style="background:var(--surface2);color:var(--text);border:1.5px solid var(--border);border-radius:50px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">⬆️ Ripristina da backup</button>
+        <input type="file" id="import-file" accept=".json" style="display:none" onchange="importBackup(event)">
+        <button onclick="confirmReset()" style="background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:50px;padding:11px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">🗑 Cancella tutti i dati</button>
+      </div>
+      <div id="backup-status" style="margin-top:14px;font-size:13px;text-align:center;padding:10px;border-radius:var(--radius-sm)"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ACCONTO MODAL -->
+<div id="acconto-modal" class="overlay hidden">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><span>💳 REGISTRA PAGAMENTO</span><button class="modal-close" onclick="closeAccontoModal()">✕</button></div>
+    <div class="modal-body">
+      <div id="acconto-pkg-info" style="background:var(--surface2);border-radius:var(--radius-sm);padding:16px 18px;margin-bottom:20px"></div>
+      <div class="field">
+        <label>Importo pagato (€) *</label>
+        <input type="number" id="acconto-amount" placeholder="0.00" oninput="updateAccontoPreview()">
+      </div>
+      <div class="field">
+        <label>Data pagamento</label>
+        <input type="date" id="acconto-date">
+      </div>
+      <div class="field">
+        <label>Metodo pagamento</label>
+        <select id="acconto-method">
+          <option value="contanti">💵 Contanti</option>
+          <option value="bonifico">🏦 Bonifico</option>
+          <option value="carta">💳 Carta</option>
+          <option value="satispay">📱 Satispay</option>
+          <option value="altro">Altro</option>
+        </select>
+      </div>
+      <div class="field"><label>Note</label><input id="acconto-note" placeholder="es. Acconto iniziale, saldo finale..."></div>
+      <div id="acconto-preview" style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:20px;display:none">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+          <span class="text-muted">Totale pacchetto</span>
+          <span id="prev-total" style="font-weight:600"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+          <span class="text-muted">Già pagato</span>
+          <span id="prev-paid" style="color:var(--success);font-weight:600"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:8px">
+          <span class="text-muted">Questo pagamento</span>
+          <span id="prev-this" style="color:var(--accent);font-weight:600"></span>
+        </div>
+        <div style="height:1px;background:var(--border);margin:10px 0"></div>
+        <div style="display:flex;justify-content:space-between;font-size:15px;font-weight:700">
+          <span>Rimanente</span>
+          <span id="prev-remaining" style="color:var(--warning)"></span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeAccontoModal()">Annulla</button>
+        <button class="btn btn-primary" onclick="saveAcconto()">💾 Salva pagamento</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="page-settings" class="page">
+    <div class="section-label">CONFIGURAZIONE</div>
+    <div class="flex-between" style="margin-top:4px;margin-bottom:24px">
+      <div class="page-title" style="margin-bottom:0">IMPOSTAZIONI</div>
+    </div>
+
+    <!-- GOOGLE CALENDAR -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(66,133,244,.15);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">📅</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">Google Calendar</div>
+          <div class="text-muted" style="font-size:12px;margin-top:2px">Ogni sessione creata viene aggiunta automaticamente</div>
+        </div>
+        <div style="margin-left:auto">
+          <label style="position:relative;display:inline-block;width:48px;height:26px;cursor:pointer">
+            <input type="checkbox" id="gcal-toggle" onchange="toggleGcal(this.checked)" style="opacity:0;width:0;height:0;position:absolute">
+            <span id="gcal-toggle-track" style="position:absolute;inset:0;border-radius:50px;background:var(--border);transition:.2s"></span>
+            <span id="gcal-toggle-thumb" style="position:absolute;left:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 4px rgba(0,0,0,.3)"></span>
+          </label>
+        </div>
+      </div>
+      <div id="gcal-setup" style="display:none">
+        <div class="field">
+          <label>La tua email Google</label>
+          <input type="email" id="gcal-email" placeholder="tuaemail@gmail.com" oninput="saveGcalEmail()" style="border-radius:50px">
+        </div>
+        <div style="background:rgba(66,133,244,.08);border:1px solid rgba(66,133,244,.2);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;line-height:1.7;color:var(--text)">
+          <b style="color:#4285f4">Come funziona:</b><br>
+          Quando crei una sessione futura, l'app apre automaticamente Google Calendar pre-compilato con cliente, orario e durata. Accedi con la tua email Google → salva → la sessione appare su iPhone tramite sync Google.
+        </div>
+        <div id="gcal-status" style="margin-top:10px;font-size:13px;color:var(--success);display:none">✅ Email salvata!</div>
+      </div>
+    </div>
+
+    <!-- PROFILO PT -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div style="width:44px;height:44px;border-radius:50%;background:var(--accent-glow);border:1.5px solid rgba(255,107,0,.3);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🏋️</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">Profilo Personal Trainer</div>
+          <div class="text-muted" style="font-size:12px;margin-top:2px">Appare nelle ricevute PDF e liberatorie</div>
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Nome e Cognome</label><input id="pt-name" placeholder="Mario Rossi" oninput="savePTProfile()"></div>
+        <div class="field"><label>P.IVA / CF</label><input id="pt-piva" placeholder="IT12345678901" oninput="savePTProfile()"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Telefono</label><input id="pt-phone" type="tel" placeholder="+39 333 1234567" oninput="savePTProfile()"></div>
+        <div class="field"><label>Email</label><input id="pt-email" type="email" placeholder="pt@email.it" oninput="savePTProfile()"></div>
+      </div>
+      <div class="field"><label>Indirizzo studio / palestra</label><input id="pt-address" placeholder="Via Roma 1, Milano" oninput="savePTProfile()"></div>
+      <div id="pt-save-status" style="font-size:12px;color:var(--success);display:none;margin-top:4px">✅ Salvato!</div>
+    </div>
+
+    <!-- BACKUP -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(46,204,113,.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💾</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">Backup & Ripristino</div>
+          <div class="text-muted" style="font-size:12px;margin-top:2px">Esporta o ripristina tutti i tuoi dati</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button onclick="exportBackup()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:50px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">⬇️ Scarica backup JSON</button>
+        <button onclick="document.getElementById('import-file-settings').click()" style="background:var(--surface2);color:var(--text);border:1.5px solid var(--border);border-radius:50px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">⬆️ Ripristina da backup</button>
+        <input type="file" id="import-file-settings" accept=".json" style="display:none" onchange="importBackupFromSettings(event)">
+      </div>
+      <div id="settings-backup-status" style="margin-top:12px;font-size:13px;text-align:center;padding:10px;border-radius:var(--radius-sm);display:none"></div>
+    </div>
+
+    <!-- DATI -->
+    <div class="card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(255,59,59,.1);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">🗑</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">Zona pericolosa</div>
+          <div class="text-muted" style="font-size:12px;margin-top:2px">Azioni irreversibili</div>
+        </div>
+      </div>
+      <button onclick="confirmReset()" style="background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:50px;padding:11px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">🗑 Cancella tutti i dati</button>
+    </div>
+  </div>
+
+  <div id="page-stats" class="page">
+    <div class="section-label">ANALYTICS</div>
+    <div class="flex-between" style="margin-top:4px;margin-bottom:20px">
+      <div class="page-title" style="margin-bottom:0">STATISTICHE</div>
+      <div style="display:flex;gap:8px">
+        <select id="stats-year" onchange="renderStats()" style="width:100px;border-radius:50px"></select>
+      </div>
+    </div>
+    <div class="stats-grid mb24" id="stats-kpis"></div>
+    <div class="grid2-detail" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div class="card">
+        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:16px">💶 INCASSI MENSILI</div>
+        <div id="chart-income" style="height:180px;display:flex;align-items:flex-end;gap:6px;padding-bottom:28px;position:relative"></div>
+      </div>
+      <div class="card">
+        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:16px">🏋️ SESSIONI MENSILI</div>
+        <div id="chart-sessions" style="height:180px;display:flex;align-items:flex-end;gap:6px;padding-bottom:28px;position:relative"></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div class="card">
+        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:16px">👥 TOP CLIENTI</div>
+        <div id="stats-top-clients"></div>
+      </div>
+      <div class="card">
+        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:16px">📦 PACCHETTI</div>
+        <div id="stats-packages"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:16px">📅 GIORNO PIÙ ATTIVO</div>
+      <div id="stats-days" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px"></div>
+    </div>
+  </div>
+
+  <div id="page-leads" class="page">
+    <div class="section-label">FITACTIVE</div>
+    <div class="flex-between" style="margin-top:4px;margin-bottom:16px">
+      <div class="page-title" style="margin-bottom:0">LEADS</div>
+      <button class="btn btn-primary" onclick="openLeadModal()">+ Nuovo</button>
+    </div>
+    <div class="stats-grid" style="margin-bottom:14px" id="leads-stats"></div>
+    <div style="overflow-x:auto;white-space:nowrap;margin-bottom:16px;-webkit-overflow-scrolling:touch">
+      <button class="chip active" onclick="setLeadFilter('tutti')" id="lf-tutti" style="margin-right:6px">Tutti</button>
+      <button class="chip" onclick="setLeadFilter('da_contattare')" id="lf-da_contattare" style="margin-right:6px">📞 Da contattare</button>
+      <button class="chip" onclick="setLeadFilter('contattato')" id="lf-contattato" style="margin-right:6px">✅ Contattati</button>
+      <button class="chip" onclick="setLeadFilter('ricontattare')" id="lf-ricontattare" style="margin-right:6px">🔄 Ricontattare</button>
+      <button class="chip" onclick="setLeadFilter('gestito')" id="lf-gestito">🏆 Gestiti</button>
+    </div>
+    <div id="leads-list" style="display:flex;flex-direction:column;gap:10px"></div>
+  </div>
+
+</main>
+</div>
+
+<!-- SESSION MODAL -->
+<div id="session-modal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-header"><span id="session-modal-title">NUOVA SESSIONE</span><button class="modal-close" onclick="closeSessionModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Cliente</label><select id="s-client"></select></div>
+      <div class="grid2">
+        <div class="field"><label>Data</label><input type="date" id="s-date"></div>
+        <div class="field"><label>Ora</label><input type="time" id="s-time"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Durata</label>
+          <select id="s-duration"><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>60 min</option><option value="75">75 min</option><option value="90">90 min</option><option value="120">120 min</option></select>
+        </div>
+        <div class="field"><label>Pacchetto</label><select id="s-package"><option value="">Nessuno</option></select></div>
+      </div>
+      <div class="field"><label>Note sessione</label><textarea id="s-note" rows="2" placeholder="Esercizi, progressi, osservazioni..."></textarea></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:22px;background:var(--surface2);padding:12px 16px;border-radius:var(--radius-sm)">
+        <input type="checkbox" id="s-done" style="width:18px;height:18px;accent-color:var(--accent)">
+        <label for="s-done" style="cursor:pointer;font-size:14px;font-weight:500">Segna come completata</label>
+      </div>
+      <div style="display:flex;justify-content:space-between;gap:10px">
+        <button class="btn btn-danger btn-sm" id="s-delete-btn" onclick="deleteSession()" style="display:none">🗑 Elimina</button>
+        <div style="display:flex;gap:10px;margin-left:auto">
+          <button class="btn btn-secondary" onclick="closeSessionModal()">Annulla</button>
+          <button class="btn btn-primary" onclick="saveSession()">💾 Salva</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MODAL -->
+<div id="client-modal" class="overlay hidden">
+  <div class="modal" style="max-width:600px">
+    <div class="modal-header"><span id="client-modal-title">NUOVO CLIENTE</span><button class="modal-close" onclick="closeClientModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="section-box">
+        <div class="section-box-title">DATI PERSONALI</div>
+        <div class="field"><label>Nome e Cognome *</label><input id="c-name" placeholder="Es. Mario Rossi"></div>
+        <div class="grid2">
+          <div class="field"><label>Telefono</label><input id="c-phone" type="tel" placeholder="+39 ..."></div>
+          <div class="field"><label>Email</label><input id="c-email" type="email" placeholder="mario@email.it"></div>
+        </div>
+        <div class="grid2">
+          <div class="field" style="margin-bottom:0"><label>Data di nascita</label><input id="c-birth" type="date"></div>
+          <div class="field" style="margin-bottom:0"><label>Codice fiscale</label><input id="c-cf" placeholder="RSSMRA..." style="text-transform:uppercase"></div>
+        </div>
+      </div>
+      <div class="section-box">
+        <div class="section-box-title">RESIDENZA</div>
+        <div class="field"><label>Indirizzo</label><input id="c-address" placeholder="Via Roma, 1"></div>
+        <div class="grid3">
+          <div class="field" style="margin-bottom:0"><label>Città</label><input id="c-city" placeholder="Milano"></div>
+          <div class="field" style="margin-bottom:0"><label>CAP</label><input id="c-cap" placeholder="20100"></div>
+          <div class="field" style="margin-bottom:0"><label>Prov.</label><input id="c-prov" placeholder="MI" maxlength="2" style="text-transform:uppercase"></div>
+        </div>
+      </div>
+      <div class="field"><label>Note</label><textarea id="c-notes" rows="2" placeholder="Patologie, obiettivi, preferenze..."></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeClientModal()">Annulla</button>
+        <button class="btn btn-primary" onclick="saveClient()">💾 Salva cliente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PACKAGE MODAL -->
+<div id="package-modal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-header"><span id="pkg-modal-title">NUOVO PACCHETTO</span><button class="modal-close" onclick="closePackageModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field"><label>Cliente *</label><select id="p-client"></select></div>
+      <div class="field"><label>Nome pacchetto *</label><input id="p-name" placeholder="es. Pacchetto 10 sedute mensile"></div>
+      <div class="grid2">
+        <div class="field"><label>N° sessioni totali</label><input id="p-sessions" type="number" value="10" min="1"></div>
+        <div class="field"><label>Prezzo (€)</label><input id="p-price" type="number" placeholder="0.00"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Data inizio</label><input id="p-start" type="date"></div>
+        <div class="field"><label>Data fine</label><input id="p-end" type="date"></div>
+      </div>
+      <div class="field"><label>Stato</label>
+        <select id="p-status"><option value="attivo">✅ Attivo</option><option value="sospeso">⏸ Sospeso</option><option value="scaduto">❌ Scaduto</option></select>
+      </div>
+      <div class="field"><label>Note</label><textarea id="p-notes" rows="2"></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closePackageModal()">Annulla</button>
+        <button class="btn btn-primary" onclick="savePackage()">💾 Salva</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SCALA SEDUTA MODAL -->
+<div id="deduct-modal" class="overlay hidden">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header"><span>SCALA SEDUTA</span><button class="modal-close" onclick="closeDeductModal()">✕</button></div>
+    <div class="modal-body">
+      <div id="deduct-pkg-info" style="background:var(--surface2);border-radius:var(--radius-sm);padding:16px 18px;margin-bottom:20px"></div>
+      <div class="field"><label>Data seduta effettuata</label><input type="date" id="deduct-date"></div>
+      <div class="field"><label>Note seduta</label><textarea id="deduct-note" rows="3" placeholder="Esercizi svolti, progressi, annotazioni..."></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeDeductModal()">Annulla</button>
+        <button class="btn btn-success" onclick="confirmDeduct()">✅ Scala seduta</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TRANSACTION MODAL -->
+<div id="transaction-modal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-header"><span>NUOVO MOVIMENTO</span><button class="modal-close" onclick="closeTxModal()">✕</button></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Tipo</label>
+        <div style="display:flex;gap:10px">
+          <button id="tx-type-entrata" class="btn" style="flex:1;border-radius:50px" onclick="setTxType('entrata')">⬆️ Entrata</button>
+          <button id="tx-type-uscita" class="btn" style="flex:1;border-radius:50px" onclick="setTxType('uscita')">⬇️ Uscita</button>
+        </div>
+      </div>
+      <div class="field"><label>Descrizione *</label><input id="tx-desc" placeholder="es. Pacchetto mensile Mario"></div>
+      <div class="grid2">
+        <div class="field"><label>Importo (€) *</label><input id="tx-amount" type="number" placeholder="0.00"></div>
+        <div class="field"><label>Data</label><input id="tx-date" type="date"></div>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Metodo pagamento</label>
+          <select id="tx-method"><option value="contanti">💵 Contanti</option><option value="bonifico">🏦 Bonifico</option><option value="carta">💳 Carta</option><option value="satispay">📱 Satispay</option><option value="altro">Altro</option></select>
+        </div>
+        <div class="field"><label>Cliente</label><select id="tx-client"><option value="">Nessuno</option></select></div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="closeTxModal()">Annulla</button>
+        <button class="btn btn-primary" onclick="saveTransaction()">💾 Salva</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DB = {
+  get clients()      { try{return JSON.parse(localStorage.getItem('pt_clients')||'[]');}catch{return[];} },
+  set clients(v)     { localStorage.setItem('pt_clients',JSON.stringify(v)); },
+  get sessions()     { try{return JSON.parse(localStorage.getItem('pt_sessions')||'[]');}catch{return[];} },
+  set sessions(v)    { localStorage.setItem('pt_sessions',JSON.stringify(v)); },
+  get packages()     { try{return JSON.parse(localStorage.getItem('pt_packages')||'[]');}catch{return[];} },
+  set packages(v)    { localStorage.setItem('pt_packages',JSON.stringify(v)); },
+  get transactions() { try{return JSON.parse(localStorage.getItem('pt_transactions')||'[]');}catch{return[];} },
+  set transactions(v){ localStorage.setItem('pt_transactions',JSON.stringify(v)); },
+  get deductions()   { try{return JSON.parse(localStorage.getItem('pt_deductions')||'[]');}catch{return[];} },
+  set deductions(v)  { localStorage.setItem('pt_deductions',JSON.stringify(v)); },
+  get payments()     { try{return JSON.parse(localStorage.getItem('pt_payments')||'[]');}catch{return[];} },
+  set payments(v)    { localStorage.setItem('pt_payments',JSON.stringify(v)); },
+  get leads()        { try{return JSON.parse(localStorage.getItem('pt_leads')||'[]');}catch{return[];} },
+  set leads(v)       { localStorage.setItem('pt_leads',JSON.stringify(v)); },
+};
+
+const uid=()=>Math.random().toString(36).slice(2,10);
+const todayStr=()=>new Date().toISOString().slice(0,10);
+const fmt=d=>d?new Date(d+'T12:00:00').toLocaleDateString('it-IT'):'—';
+const fmtMoney=n=>`€ ${Number(n||0).toFixed(2)}`;
+const MONTHS=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const DAYS=['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+
+let currentPage='dashboard',calYear=new Date().getFullYear(),calMonth=new Date().getMonth(),calSelected=todayStr();
+let editingSession=null,editingClient=null,editingPackage=null,pkgFilter='tutti',txType='entrata',clientDetailId=null,deductingPkgId=null,accontoPkgId=null;
+
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('active');
+  currentPage=page; renderPage(page); updateMobileUI(page); if(page==='settings') loadSettings();
+}
+function renderPage(page){
+  if(page==='dashboard')renderDashboard();
+  else if(page==='calendar')renderCalendar();
+  else if(page==='clients')renderClients();
+  else if(page==='packages')renderPackages();
+  else if(page==='accounting')renderAccounting();
+  else if(page==='stats')renderStats();
+}
+
+function renderDashboard(){
+  const now=new Date(),m=now.getMonth(),y=now.getFullYear();
+  const clients=DB.clients,sessions=DB.sessions,packages=DB.packages,transactions=DB.transactions;
+  const thisMoIncome=transactions.filter(t=>{const d=new Date(t.date);return t.type==='entrata'&&d.getMonth()===m&&d.getFullYear()===y;}).reduce((s,t)=>s+ +t.amount,0);
+  const thisMoS=sessions.filter(s=>{const d=new Date(s.date);return d.getMonth()===m&&d.getFullYear()===y;});
+  document.getElementById('dash-stats').innerHTML=[
+    {icon:'👥',label:'Clienti',value:clients.length,color:'var(--accent)'},
+    {icon:'🏋️',label:'Sessioni mese',value:thisMoS.length,color:'var(--accent2)'},
+    {icon:'📦',label:'Pacchetti attivi',value:packages.filter(p=>p.status==='attivo').length,color:'var(--info)'},
+    {icon:'💶',label:'Incassi mese',value:fmtMoney(thisMoIncome),color:'var(--success)'},
+  ].map(s=>`<div class="stat-card"><div class="stat-icon">${s.icon}</div><div class="stat-value" style="color:${s.color}">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join('');
+  const todaySessions=sessions.filter(s=>s.date===todayStr()).sort((a,b)=>a.time.localeCompare(b.time));
+  document.getElementById('dash-today-title').textContent='OGGI — '+fmt(todayStr());
+  document.getElementById('dash-today-list').innerHTML=todaySessions.length===0?'<div class="empty-state">Nessuna sessione 🎉</div>':todaySessions.map(s=>{const cl=clients.find(c=>c.id===s.clientId);return`<div class="row-item"><div><b>${s.time}</b><span class="text-muted" style="margin-left:8px">${cl?.name||'—'}</span></div><span style="color:${s.done?'var(--success)':'var(--muted)'};font-size:13px">${s.done?'✓':s.duration+'m'}</span></div>`;}).join('');
+  const upcoming=sessions.filter(s=>s.date>=todayStr()&&!s.done).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)).slice(0,5);
+  document.getElementById('dash-upcoming-list').innerHTML=upcoming.length===0?'<div class="empty-state">Nessun appuntamento</div>':upcoming.map(s=>{const cl=clients.find(c=>c.id===s.clientId);return`<div class="row-item"><div><b>${cl?.name||'—'}</b><br><span class="text-muted" style="font-size:12px">${fmt(s.date)} · ${s.time}</span></div><span class="text-muted" style="font-size:12px">${s.duration}m</span></div>`;}).join('');
+}
+
+function renderCalendar(){
+  document.getElementById('cal-title').textContent=MONTHS[calMonth]+' '+calYear;
+  document.getElementById('cal-selected-title').textContent=fmt(calSelected);
+  const firstDay=new Date(calYear,calMonth,1).getDay(),daysInMonth=new Date(calYear,calMonth+1,0).getDate(),sessions=DB.sessions;
+  let html=DAYS.map(d=>`<div class="cal-day-header">${d}</div>`).join('');
+  for(let i=0;i<firstDay;i++)html+='<div></div>';
+  for(let d=1;d<=daysInMonth;d++){
+    const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const ds2=sessions.filter(s=>s.date===ds),isToday=ds===todayStr(),isSel=ds===calSelected;
+    html+=`<div class="cal-cell${isToday?' today':''}${isSel?' selected':''}" onclick="selectCalDay('${ds}')"><div class="cal-num">${d}</div><div style="margin-top:3px">${ds2.slice(0,4).map(()=>'<span class="cal-dot"></span>').join('')}</div></div>`;
+  }
+  document.getElementById('cal-grid').innerHTML=html;
+  renderCalDaySessions();
+}
+function selectCalDay(ds){calSelected=ds;document.getElementById('cal-selected-title').textContent=fmt(ds);renderCalendar();}
+function renderCalDaySessions(){
+  const sessions=DB.sessions.filter(s=>s.date===calSelected).sort((a,b)=>a.time.localeCompare(b.time)),clients=DB.clients,el=document.getElementById('cal-day-sessions');
+  if(sessions.length===0){el.innerHTML='<div class="card"><div class="empty-state">Nessuna sessione</div></div>';return;}
+  el.innerHTML=sessions.map(s=>{const cl=clients.find(c=>c.id===s.clientId);return`<div class="card" style="margin-bottom:10px;border-left:3px solid ${s.done?'var(--success)':'var(--accent)'}"><div onclick="openSessionModal('${s.id}')" style="cursor:pointer"><div class="flex-between"><div><div style="font-weight:600;font-size:15px">${cl?.name||'—'}</div><div class="text-muted" style="font-size:12px;margin-top:3px">🕐 ${s.time} · ${s.duration}min</div>${s.note?`<div class="text-muted" style="font-size:12px;margin-top:4px;font-style:italic">"${s.note}"</div>`:''}</div><span class="tag" style="background:${s.done?'rgba(46,204,113,.15)':'rgba(255,107,0,.12)'};color:${s.done?'var(--success)':'var(--accent)'}">${s.done?'✓ Fatto':'Prev.'}</span></div></div><div style="display:flex;gap:8px;margin-top:10px;border-top:1px solid var(--border);padding-top:10px"><button onclick="addToGoogleCalendar(${JSON.stringify(s).replace(/'/g,'\\u0027')})" style="flex:1;background:rgba(66,133,244,.1);border:1px solid #4285f4;color:#4285f4;border-radius:50px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer">📅 Google Cal</button><button onclick="exportToICS(${JSON.stringify(s).replace(/'/g,'\\u0027')})" style="flex:1;background:rgba(255,107,0,.1);border:1px solid var(--accent);color:var(--accent);border-radius:50px;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer">📥 .ICS</button></div></div>`;}).join('');
+}
+function calPrev(){if(calMonth===0){calMonth=11;calYear--;}else calMonth--;renderCalendar();}
+function calNext(){if(calMonth===11){calMonth=0;calYear++;}else calMonth++;renderCalendar();}
+
+function openSessionModal(id){
+  editingSession=id||null;
+  const clients=DB.clients,sel=document.getElementById('s-client');
+  sel.innerHTML='<option value="">Seleziona cliente</option>'+clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(id){
+    const s=DB.sessions.find(x=>x.id===id);
+    document.getElementById('session-modal-title').textContent='MODIFICA SESSIONE';
+    document.getElementById('s-delete-btn').style.display='block';
+    sel.value=s.clientId||'';document.getElementById('s-date').value=s.date;document.getElementById('s-time').value=s.time;
+    document.getElementById('s-duration').value=s.duration;document.getElementById('s-note').value=s.note||'';document.getElementById('s-done').checked=s.done||false;
+    updatePackageOptions(s.clientId,s.packageId);
+  } else {
+    document.getElementById('session-modal-title').textContent='NUOVA SESSIONE';document.getElementById('s-delete-btn').style.display='none';
+    sel.value='';document.getElementById('s-date').value=calSelected;document.getElementById('s-time').value='09:00';
+    document.getElementById('s-duration').value='60';document.getElementById('s-note').value='';document.getElementById('s-done').checked=false;
+    updatePackageOptions('','');
+  }
+  sel.onchange=()=>updatePackageOptions(sel.value,'');
+  document.getElementById('session-modal').classList.remove('hidden');
+}
+function updatePackageOptions(clientId,selectedPkg){
+  const pkgs=DB.packages.filter(p=>p.clientId===clientId&&p.status==='attivo');
+  document.getElementById('s-package').innerHTML='<option value="">Nessuno</option>'+pkgs.map(p=>`<option value="${p.id}"${p.id===selectedPkg?' selected':''}>${p.name}</option>`).join('');
+}
+function closeSessionModal(){document.getElementById('session-modal').classList.add('hidden');editingSession=null;}
+function saveSession(){
+  const clientId=document.getElementById('s-client').value,date=document.getElementById('s-date').value,time=document.getElementById('s-time').value;
+  if(!date||!time)return;
+  const packageId=document.getElementById('s-package').value;
+  const wasDone=editingSession?DB.sessions.find(x=>x.id===editingSession)?.done:false;
+  const isDone=document.getElementById('s-done').checked;
+  const s={id:editingSession||uid(),clientId,date,time,duration:+document.getElementById('s-duration').value,note:document.getElementById('s-note').value,done:isDone,packageId};
+  const sessions=DB.sessions,idx=sessions.findIndex(x=>x.id===s.id);
+  if(idx>=0)sessions[idx]=s;else sessions.push(s);
+  DB.sessions=sessions;
+  // Auto-scale deduction: if marked done NOW (wasn't before) and has a package
+  if(isDone && !wasDone && packageId){
+    const pkg=DB.packages.find(p=>p.id===packageId);
+    if(pkg){
+      const alreadyDeducted=DB.deductions.some(d=>d.sessionId===s.id);
+      if(!alreadyDeducted){
+        const deductions=DB.deductions;
+        deductions.push({id:uid(),packageId,sessionId:s.id,date,note:s.note||'',createdAt:todayStr(),auto:true});
+        DB.deductions=deductions;
+      }
+    }
+  }
+  // If un-marked done, remove the auto-deduction linked to this session
+  if(!isDone && wasDone && packageId){
+    DB.deductions=DB.deductions.filter(d=>!(d.sessionId===s.id&&d.auto===true));
+  }
+  // Schedule / cancel notification
+  if (s.done) {
+    cancelSessionNotif(s.id);
+  } else {
+    scheduleSessionNotif(s);
+  }
+  closeSessionModal();renderPage(currentPage);
+  // Auto Google Calendar if enabled and session is future and not done
+  if (!isDone) {
+    const gcalOn = localStorage.getItem('pt_gcal_enabled') === 'true';
+    const gcalEmail = localStorage.getItem('pt_gcal_email') || '';
+    const sessionDt = new Date(date + 'T' + time + ':00');
+    if (gcalOn && sessionDt > new Date()) {
+      setTimeout(() => addToGoogleCalendar(s), 600);
+    }
+  }
+}
+async function deleteSession(){var _id=editingSession;if(!await customConfirm('Vuoi davvero eliminare questa sessione?','🗑 ELIMINA SESSIONE'))return;cancelSessionNotif(_id);DB.sessions=DB.sessions.filter(s=>s.id!==_id);closeSessionModal();renderPage(currentPage);}
+
+function renderClients(){
+  if(clientDetailId){renderClientDetail(clientDetailId);return;}
+  document.getElementById('client-detail').classList.add('hidden');
+  document.getElementById('client-list-view').classList.remove('hidden');
+  const search=(document.getElementById('client-search')?.value||'').toLowerCase();
+  const clients=DB.clients.filter(c=>c.name.toLowerCase().includes(search)||(c.phone||'').includes(search)||(c.cf||'').toLowerCase().includes(search));
+  const sessions=DB.sessions,packages=DB.packages,grid=document.getElementById('clients-grid');
+  if(clients.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1">Nessun cliente trovato</div>';return;}
+  grid.innerHTML=clients.map(c=>{
+    const clientPkgIds=packages.filter(p=>p.clientId===c.id).map(p=>p.id);
+    const doneSessions=sessions.filter(s=>s.clientId===c.id&&s.done).length;
+    const manualDed=DB.deductions.filter(d=>clientPkgIds.includes(d.packageId)&&!d.sessionId).length;
+    const ss=doneSessions+manualDed;
+    const pp=packages.filter(p=>p.clientId===c.id&&p.status==='attivo').length;
+    const loc=[c.city,c.prov].filter(Boolean).join(' (')+(c.prov?')':'');
+    return`<div class="card" style="cursor:pointer" onclick="showClientDetail('${c.id}')">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
+        <div style="flex:1;min-width:0"><div style="font-weight:700;font-size:16px">${c.name}</div><div class="text-muted" style="font-size:13px;margin-top:4px">${c.phone||c.email||'—'}</div>${loc?`<div class="text-muted" style="font-size:12px;margin-top:2px">📍 ${loc}</div>`:''}</div>
+        <div class="avatar">${c.name.charAt(0).toUpperCase()}</div>
+      </div>
+      <div class="divider"></div>
+      <div style="display:flex;gap:16px"><span class="text-muted" style="font-size:12px">🏋️ ${ss} sedute</span><span style="font-size:12px;color:${pp>0?'var(--accent)':'var(--muted)'}">📦 ${pp} attivi</span></div>
+    </div>`;
+  }).join('');
+}
+
+function showClientDetail(id){clientDetailId=id;renderClientDetail(id);}
+function renderClientDetail(id){
+  const cl=DB.clients.find(c=>c.id===id);if(!cl)return;
+  document.getElementById('client-list-view').classList.add('hidden');
+  const detail=document.getElementById('client-detail');detail.classList.remove('hidden');
+  const ss=DB.sessions.filter(s=>s.clientId===id).sort((a,b)=>b.date.localeCompare(a.date));
+  const pp=DB.packages.filter(p=>p.clientId===id);
+  const loc=[cl.address,cl.city,cl.cap,cl.prov?'('+cl.prov+')':''].filter(Boolean).join(', ');
+  detail.innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:26px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="backToClients()">← Indietro</button>
+      <div class="avatar avatar-lg">${cl.name.charAt(0).toUpperCase()}</div>
+      <div><div class="bebas" style="font-size:30px">${cl.name}</div>${cl.city?`<div class="text-muted" style="font-size:13px">📍 ${loc}</div>`:''}</div>
+      <div style="margin-left:auto;display:flex;gap:8px;flex-wrap:wrap">
+        ${cl?.phone?`<button onclick="sendWhatsApp('${cl.phone}','${cl.name.split(' ')[0]}','','','reminder')" style="background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">💬 WhatsApp</button>`:''}
+        <button class="btn btn-secondary btn-sm" onclick="openClientModal('${id}')">✏️ Modifica</button>
+        <button onclick="generateGDPR('${id}')" style="background:rgba(52,152,219,.12);border:1.5px solid var(--info);color:var(--info);border-radius:50px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer">📋 GDPR</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteClient('${id}')">🗑</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+      <div class="card">
+        <div class="bebas" style="font-size:13px;letter-spacing:3px;margin-bottom:14px;color:var(--accent)">DATI PERSONALI</div>
+        ${cl.phone?`<div class="row-item"><span class="text-muted" style="font-size:12px">📞 Telefono</span><a href="tel:${cl.phone}" style="font-size:14px;font-weight:600;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:6px">${cl.phone} <span style="font-size:10px;background:rgba(255,107,0,.15);padding:2px 8px;border-radius:50px">CHIAMA</span></a></div>`:''}
+        ${cl.phone?`<div class="row-item"><span class="text-muted" style="font-size:12px">💬 WhatsApp</span><a href="https://wa.me/${cl.phone.replace(/[^0-9]/g,'')}" target="_blank" style="font-size:14px;font-weight:600;color:#25D366;text-decoration:none;display:flex;align-items:center;gap:6px">${cl.phone} <span style="font-size:10px;background:rgba(37,211,102,.15);padding:2px 8px;border-radius:50px">APRI</span></a></div>`:''}
+        ${cl.email?`<div class="row-item"><span class="text-muted" style="font-size:12px">📧 Email</span><a href="mailto:${cl.email}" style="font-size:14px;font-weight:600;color:var(--info);text-decoration:none;display:flex;align-items:center;gap:6px">${cl.email} <span style="font-size:10px;background:rgba(52,152,219,.15);padding:2px 8px;border-radius:50px">SCRIVI</span></a></div>`:''}
+        ${cl.birthdate?`<div class="row-item"><span class="text-muted" style="font-size:12px">🎂 Data di nascita</span><span style="font-size:14px;font-weight:600">${fmt(cl.birthdate)} ${(()=>{const b=new Date(cl.birthdate);const today=new Date();let age=today.getFullYear()-b.getFullYear();const m=today.getMonth()-b.getMonth();if(m<0||(m===0&&today.getDate()<b.getDate()))age--;return '<span style="font-size:12px;color:var(--muted);font-weight:400">('+age+' anni)</span>';})()}</span></div>`:''}
+        ${cl.cf?`<div class="row-item"><span class="text-muted" style="font-size:12px">🪪 Codice fiscale</span><span style="font-size:14px;font-weight:600;letter-spacing:1px;cursor:pointer" onclick="navigator.clipboard&&navigator.clipboard.writeText('${cl.cf}').then(()=>{this.style.color='var(--success)';setTimeout(()=>this.style.color='',1200)})" title="Tocca per copiare">${cl.cf} <span style="font-size:10px;background:rgba(136,136,170,.12);padding:2px 8px;border-radius:50px;color:var(--muted)">COPIA</span></span></div>`:''}
+        ${loc?`<div class="row-item"><span class="text-muted" style="font-size:12px">📍 Indirizzo</span><a href="https://maps.google.com/?q=${encodeURIComponent(loc)}" target="_blank" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;text-align:right;max-width:200px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">${loc} <span style="font-size:10px;background:rgba(52,152,219,.15);color:var(--info);padding:2px 8px;border-radius:50px">MAPPA</span></a></div>`:''}
+        <div class="row-item"><span class="text-muted" style="font-size:12px">📅 Cliente dal</span><span style="font-size:14px;font-weight:600">${fmt(cl.createdAt)}</span></div>
+        ${cl.notes?`<div style="margin-top:14px;padding:12px 14px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--accent)"><div style="font-size:10px;color:var(--accent);font-weight:700;letter-spacing:1px;margin-bottom:6px">NOTE</div><div style="font-size:13px;line-height:1.6;color:var(--text)">${cl.notes}</div></div>`:''}
+      </div>
+      <div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div class="stat-card"><div class="stat-icon">🏋️</div><div class="stat-value" style="color:var(--accent)">${(()=>{const ids=DB.packages.filter(p=>p.clientId===id).map(p=>p.id);const done=DB.sessions.filter(s=>s.clientId===id&&s.done).length;const manual=DB.deductions.filter(d=>ids.includes(d.packageId)&&!d.sessionId).length;return done+manual;})()}</div><div class="stat-label">Sedute fatte</div></div>
+          <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-value" style="color:var(--info)">${pp.filter(p=>p.status==='attivo').length}</div><div class="stat-label">Pacchet. attivi</div></div>
+        </div>
+        <div class="card">
+          <div class="bebas" style="font-size:13px;letter-spacing:3px;margin-bottom:10px;color:var(--accent)">PACCHETTI</div>
+          ${pp.length===0?'<div class="text-muted" style="font-size:13px">Nessun pacchetto</div>':pp.map(p=>{const used=DB.deductions.filter(d=>d.packageId===p.id).length;const rem=Math.max(0,(p.totalSessions||0)-used);return`<div class="row-item"><span style="font-size:13px;font-weight:500">${p.name}</span><span style="font-size:12px;color:${rem===0?'var(--danger)':rem<=2?'var(--warning)':'var(--success)'}">🎯 ${rem} rim.</span></div>`}).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="bebas" style="font-size:13px;letter-spacing:3px;margin-bottom:14px;color:var(--accent)">STORICO SEDUTE</div>
+      ${(()=>{
+        const clientPkgIds=DB.packages.filter(p=>p.clientId===id).map(p=>p.id);
+        const manualDeds=DB.deductions.filter(d=>clientPkgIds.includes(d.packageId)&&!d.sessionId).map(d=>{const pkg=DB.packages.find(p=>p.id===d.packageId);return{date:d.date,time:'',duration:'',note:(d.note||'')+(pkg?' · '+pkg.name:''),done:true,type:'ded'};});
+        const allRows=[...ss.filter(s=>s.done), ...manualDeds].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,15);
+        if(allRows.length===0) return '<div class="empty-state">Nessuna seduta registrata</div>';
+        return allRows.map(s=>`<div class="row-item">
+          <span style="font-size:13px;font-weight:500">${fmt(s.date)}${s.time?' '+s.time:''}</span>
+          <span class="text-muted" style="font-size:12px">${s.duration?s.duration+'min':s.type==='ded'?'📦':'—'}</span>
+          ${s.note?`<span class="text-muted" style="font-size:12px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px">"${s.note}"</span>`:'<span></span>'}
+          <span style="color:var(--success);font-size:13px">✓</span>
+        </div>`).join('');
+      })()}
+    </div>`;
+}
+function backToClients(){clientDetailId=null;renderClients();}
+function openClientModal(id){
+  editingClient=id||null;
+  document.getElementById('client-modal-title').textContent=id?'MODIFICA CLIENTE':'NUOVO CLIENTE';
+  if(id){
+    const c=DB.clients.find(x=>x.id===id);
+    document.getElementById('c-name').value=c.name||'';document.getElementById('c-phone').value=c.phone||'';document.getElementById('c-email').value=c.email||'';
+    document.getElementById('c-birth').value=c.birthdate||'';document.getElementById('c-cf').value=c.cf||'';
+    document.getElementById('c-address').value=c.address||'';document.getElementById('c-city').value=c.city||'';document.getElementById('c-cap').value=c.cap||'';document.getElementById('c-prov').value=c.prov||'';
+    document.getElementById('c-notes').value=c.notes||'';
+  } else {
+    ['c-name','c-phone','c-email','c-birth','c-cf','c-address','c-city','c-cap','c-prov','c-notes'].forEach(i=>document.getElementById(i).value='');
+  }
+  document.getElementById('client-modal').classList.remove('hidden');
+}
+function closeClientModal(){document.getElementById('client-modal').classList.add('hidden');editingClient=null;}
+function saveClient(){
+  const name=document.getElementById('c-name').value.trim();
+  if(!name)return alert('Inserisci il nome del cliente');
+  const c={id:editingClient||uid(),name,phone:document.getElementById('c-phone').value,email:document.getElementById('c-email').value,birthdate:document.getElementById('c-birth').value,cf:document.getElementById('c-cf').value.toUpperCase(),address:document.getElementById('c-address').value,city:document.getElementById('c-city').value,cap:document.getElementById('c-cap').value,prov:document.getElementById('c-prov').value.toUpperCase(),notes:document.getElementById('c-notes').value,createdAt:editingClient?DB.clients.find(x=>x.id===editingClient)?.createdAt:todayStr()};
+  const clients=DB.clients,idx=clients.findIndex(x=>x.id===c.id);
+  if(idx>=0)clients[idx]=c;else clients.push(c);
+  DB.clients=clients;closeClientModal();renderPage(currentPage);
+}
+async function deleteClient(id){var _id=id;if(!await customConfirm('Eliminare questo cliente? Perderai tutte le sue informazioni.','🗑 ELIMINA CLIENTE'))return;DB.clients=DB.clients.filter(c=>c.id!==_id);backToClients();}
+
+function setPkgFilter(f){
+  pkgFilter=f;
+  ['tutti','attivo','scaduto','sospeso'].forEach(x=>{document.getElementById('pkg-f-'+x).className='chip'+(x===f?' active':'');});
+  renderPackages();
+}
+
+function renderPackages(){
+  const packages=pkgFilter==='tutti'?DB.packages:DB.packages.filter(p=>p.status===pkgFilter);
+  const clients=DB.clients,deductions=DB.deductions;
+  const statusColor={attivo:'var(--success)',scaduto:'var(--danger)',sospeso:'var(--warning)'};
+  const statusBg={attivo:'rgba(46,204,113,.12)',scaduto:'rgba(255,59,59,.12)',sospeso:'rgba(243,156,18,.12)'};
+  const el=document.getElementById('packages-list');
+  if(packages.length===0){el.innerHTML='<div class="card"><div class="empty-state">Nessun pacchetto</div></div>';return;}
+  el.innerHTML=packages.map(p=>{
+    const cl=clients.find(c=>c.id===p.clientId);
+    const pkgDed=deductions.filter(d=>d.packageId===p.id);
+    const used=pkgDed.length,remaining=Math.max(0,(p.totalSessions||0)-used),perc=Math.min(100,(used/(p.totalSessions||1))*100);
+    const lastDed=pkgDed.sort((a,b)=>b.date.localeCompare(a.date))[0];
+    const pkgPayments=DB.payments.filter(py=>py.packageId===p.id);
+    const pkgPaid=pkgPayments.reduce((s,py)=>s+ +py.amount,0);
+    const pkgOwed=Math.max(0,(+p.price||0)-pkgPaid);
+    return`<div class="card">
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+            <span style="font-weight:700;font-size:17px">${p.name}</span>
+            <span class="tag" style="background:${statusBg[p.status]};color:${statusColor[p.status]}">${p.status}</span>
+          </div>
+          <div class="text-muted" style="font-size:13px">👤 ${cl?.name||'—'}</div>
+          <div class="text-muted" style="font-size:12px;margin-top:3px">📅 ${fmt(p.startDate)}${p.endDate?' → '+fmt(p.endDate):''}</div>
+          ${lastDed?`<div class="text-muted" style="font-size:12px;margin-top:3px">🕐 Ultima: ${fmt(lastDed.date)}</div>`:''}
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div class="bebas" style="font-size:28px;color:var(--accent);line-height:1">${fmtMoney(p.price)}</div>
+          <div style="margin-top:4px;font-size:12px">
+            <span style="color:var(--success);font-weight:600">${fmtMoney(pkgPaid)}</span>
+            <span class="text-muted"> pagato</span>
+          </div>
+          ${pkgOwed>0?`<div style="font-size:12px;margin-top:2px"><span style="color:var(--warning);font-weight:600">${fmtMoney(pkgOwed)}</span><span class="text-muted"> rimanente</span></div>`:'<div style="font-size:12px;margin-top:2px;color:var(--success);font-weight:600">✅ Saldato</div>'}
+          <div style="margin-top:6px">
+            <span style="font-family:'Bebas Neue';font-size:24px;color:${remaining===0?'var(--danger)':remaining<=2?'var(--warning)':'var(--text)'}">${remaining}</span>
+            <span class="text-muted" style="font-size:12px"> / ${p.totalSessions} rimaste</span>
+          </div>
+        </div>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" style="width:${perc}%;background:${perc>=100?'var(--danger)':perc>=75?'var(--warning)':'linear-gradient(90deg,var(--accent),var(--accent2))'}"></div></div>
+      <div style="display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;align-items:center">
+        ${remaining>0?`<button class="btn btn-success btn-sm" onclick="openDeductModal('${p.id}')">✅ Scala seduta</button>`:`<span class="tag" style="background:rgba(255,59,59,.12);color:var(--danger);padding:7px 14px">Sedute esaurite</span>`}
+        ${pkgOwed>0?`<button class="btn btn-sm" style="background:linear-gradient(135deg,#1a6b3a,#27ae60);color:#fff;border:none;border-radius:50px" onclick="openAccontoModal('${p.id}')">💳 Acconto/Pagamento</button>`:''}
+        <button class="btn btn-orange-outline btn-sm" onclick="togglePkgHistory('${p.id}')">📋 Storico</button>
+        <div style="margin-left:auto;display:flex;gap:8px">
+          <button class="btn btn-secondary btn-sm" onclick="openPackageModal('${p.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePackage('${p.id}')">🗑</button>
+        </div>
+      </div>
+      <div id="pkg-history-${p.id}" class="hidden" style="margin-top:16px;border-top:1px solid var(--border);padding-top:14px">
+        <div style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:2px;margin-bottom:10px">SEDUTE SCALATE</div>
+        ${pkgDed.length===0?'<div class="text-muted" style="font-size:13px;text-align:center;padding:8px 0">Nessuna seduta scalata</div>':pkgDed.sort((a,b)=>b.date.localeCompare(a.date)).map((d,i)=>`<div class="seduta-item"><div class="seduta-num">${pkgDed.length-i}</div><div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">${fmt(d.date)}</div>${d.note?`<div class="text-muted" style="font-size:12px;margin-top:2px;font-style:italic">"${d.note}"</div>`:''}</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 8px;color:var(--danger)" onclick="deleteDeduction('${d.id}','${p.id}')">✕</button></div>`).join('')}
+        ${pkgPayments.length>0?`<div style="font-size:11px;color:var(--success);font-weight:700;letter-spacing:2px;margin:14px 0 10px">PAGAMENTI RICEVUTI</div>${pkgPayments.sort((a,b)=>b.date.localeCompare(a.date)).map(py=>`<div style="background:rgba(46,204,113,.06);border:1px solid rgba(46,204,113,.2);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:8px;display:flex;align-items:center;gap:12px"><div style="font-size:20px">💳</div><div style="flex:1"><div style="font-size:13px;font-weight:600;color:var(--success)">+${fmtMoney(py.amount)}</div><div class="text-muted" style="font-size:12px;margin-top:2px">${fmt(py.date)} · ${py.method}${py.note?' · '+py.note:''}</div></div><button onclick="generateReceiptPDF('${py.id}','${p.id}')" style="background:rgba(255,107,0,.12);border:1px solid var(--accent);color:var(--accent);border-radius:50px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap">🧾 PDF</button><button class="btn btn-ghost" style="font-size:11px;color:var(--danger);padding:4px 8px" onclick="deletePayment('${py.id}','${p.id}')">✕</button></div>`).join('')}`:''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function togglePkgHistory(pkgId){document.getElementById('pkg-history-'+pkgId).classList.toggle('hidden');}
+
+function openDeductModal(pkgId){
+  deductingPkgId=pkgId;
+  const p=DB.packages.find(x=>x.id===pkgId),cl=DB.clients.find(c=>c.id===p.clientId);
+  const used=DB.deductions.filter(d=>d.packageId===pkgId).length,remaining=(p.totalSessions||0)-used;
+  document.getElementById('deduct-pkg-info').innerHTML=`<div style="font-weight:700;font-size:15px;margin-bottom:4px">${p.name}</div><div class="text-muted" style="font-size:13px">👤 ${cl?.name||'—'}</div><div style="margin-top:12px;display:flex;gap:24px"><div><div class="bebas" style="font-size:26px;color:var(--accent)">${remaining}</div><div class="text-muted" style="font-size:11px;letter-spacing:1px">RIMASTE</div></div><div><div class="bebas" style="font-size:26px;color:var(--muted)">${used}</div><div class="text-muted" style="font-size:11px;letter-spacing:1px">GIÀ SCALATE</div></div></div>`;
+  document.getElementById('deduct-date').value=todayStr();
+  document.getElementById('deduct-note').value='';
+  document.getElementById('deduct-modal').classList.remove('hidden');
+}
+function closeDeductModal(){document.getElementById('deduct-modal').classList.add('hidden');deductingPkgId=null;}
+function confirmDeduct(){
+  if(!deductingPkgId)return;
+  const date=document.getElementById('deduct-date').value;
+  if(!date)return alert('Inserisci la data della seduta');
+  const note=document.getElementById('deduct-note').value;
+  const deductions=DB.deductions;deductions.push({id:uid(),packageId:deductingPkgId,date,note,createdAt:todayStr()});
+  DB.deductions=deductions;closeDeductModal();renderPackages();
+}
+async function deleteDeduction(id){var _id=id;if(!await customConfirm('Rimuovere questa seduta dallo storico?','🗑 RIMUOVI SEDUTA','Sì, rimuovi','btn-danger'))return;DB.deductions=DB.deductions.filter(d=>d.id!==_id);renderPackages();}
+
+function openPackageModal(id){
+  editingPackage=id||null;
+  document.getElementById('pkg-modal-title').textContent=id?'MODIFICA PACCHETTO':'NUOVO PACCHETTO';
+  const clients=DB.clients;
+  document.getElementById('p-client').innerHTML='<option value="">Seleziona cliente</option>'+clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  if(id){
+    const p=DB.packages.find(x=>x.id===id);
+    document.getElementById('p-client').value=p.clientId||'';document.getElementById('p-name').value=p.name||'';document.getElementById('p-sessions').value=p.totalSessions||10;document.getElementById('p-price').value=p.price||'';document.getElementById('p-start').value=p.startDate||'';document.getElementById('p-end').value=p.endDate||'';document.getElementById('p-status').value=p.status||'attivo';document.getElementById('p-notes').value=p.notes||'';
+  } else {
+    document.getElementById('p-client').value='';document.getElementById('p-name').value='';document.getElementById('p-sessions').value=10;document.getElementById('p-price').value='';document.getElementById('p-start').value=todayStr();document.getElementById('p-end').value='';document.getElementById('p-status').value='attivo';document.getElementById('p-notes').value='';
+  }
+  document.getElementById('package-modal').classList.remove('hidden');
+}
+function closePackageModal(){document.getElementById('package-modal').classList.add('hidden');editingPackage=null;}
+function savePackage(){
+  const clientId=document.getElementById('p-client').value,name=document.getElementById('p-name').value.trim();
+  if(!clientId||!name)return alert('Seleziona un cliente e inserisci il nome');
+  const p={id:editingPackage||uid(),clientId,name,totalSessions:+document.getElementById('p-sessions').value,price:document.getElementById('p-price').value,startDate:document.getElementById('p-start').value,endDate:document.getElementById('p-end').value,status:document.getElementById('p-status').value,notes:document.getElementById('p-notes').value};
+  const packages=DB.packages,idx=packages.findIndex(x=>x.id===p.id);
+  if(idx>=0)packages[idx]=p;else packages.push(p);
+  DB.packages=packages;closePackageModal();renderPackages();
+}
+async function deletePackage(id){var _id=id;if(!await customConfirm('Eliminare il pacchetto e tutto il suo storico sedute e pagamenti?','🗑 ELIMINA PACCHETTO'))return;DB.packages=DB.packages.filter(p=>p.id!==_id);DB.deductions=DB.deductions.filter(d=>d.packageId!==_id);DB.payments=DB.payments.filter(py=>py.packageId!==_id);renderPackages();}
+
+function initAccFilters(){
+  const mSel=document.getElementById('acc-month'),ySel=document.getElementById('acc-year');
+  if(mSel.options.length===0){
+    MONTHS.forEach((m,i)=>mSel.innerHTML+=`<option value="${i}">${m}</option>`);
+    [2023,2024,2025,2026,2027].forEach(y=>ySel.innerHTML+=`<option value="${y}">${y}</option>`);
+    mSel.value=new Date().getMonth();ySel.value=new Date().getFullYear();
+  }
+}
+function renderAccounting(){
+  initAccFilters();
+  const m=+document.getElementById('acc-month').value,y=+document.getElementById('acc-year').value;
+  const clients=DB.clients,packages=DB.packages;
+
+  // All transactions for the month (includes auto-generated from payments)
+  const transactions=DB.transactions.filter(t=>{const d=new Date(t.date);return d.getMonth()===m&&d.getFullYear()===y;});
+  const income=transactions.filter(t=>t.type==='entrata').reduce((s,t)=>s+ +t.amount,0);
+  const expense=transactions.filter(t=>t.type==='uscita').reduce((s,t)=>s+ +t.amount,0);
+
+  // Total outstanding credit (unpaid package balances across all active packages)
+  const totalCredit=packages.filter(p=>p.status==='attivo').reduce((s,p)=>{
+    const paid=DB.payments.filter(py=>py.packageId===p.id).reduce((s2,py)=>s2+ +py.amount,0);
+    return s+Math.max(0,(+p.price||0)-paid);
+  },0);
+
+  document.getElementById('acc-stats').innerHTML=[
+    {icon:'📈',label:'Entrate mese',value:fmtMoney(income),color:'var(--success)'},
+    {icon:'📉',label:'Uscite mese',value:fmtMoney(expense),color:'var(--danger)'},
+    {icon:'💰',label:'Saldo netto',value:fmtMoney(income-expense),color:income-expense>=0?'var(--accent)':'var(--danger)'},
+    {icon:'⏳',label:'Crediti attivi',value:fmtMoney(totalCredit),color:'var(--warning)'},
+  ].map(s=>`<div class="stat-card"><div class="stat-icon">${s.icon}</div><div class="stat-value" style="color:${s.color}">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join('');
+
+  const el=document.getElementById('acc-list');
+  const sorted=[...transactions].sort((a,b)=>b.date.localeCompare(a.date));
+
+  if(sorted.length===0){
+    el.innerHTML='<div class="empty-state">Nessun movimento questo mese</div>';
+    return;
+  }
+
+  el.innerHTML = sorted.map(t=>{
+    const cl=clients.find(c=>c.id===t.clientId);
+    const col=t.type==='entrata'?'var(--success)':'var(--danger)';
+    const isAuto=t.auto===true;
+    const badge=isAuto?`<span style="background:rgba(255,107,0,.15);color:var(--accent);font-size:10px;font-weight:700;padding:2px 8px;border-radius:50px;margin-left:6px;letter-spacing:.5px">AUTO</span>`:'';
+    return `<div class="row-item">
+      <div style="width:42px;height:42px;border-radius:50%;background:${t.type==='entrata'?'rgba(46,204,113,.12)':'rgba(255,59,59,.12)'};display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0">${isAuto?'📦':t.type==='entrata'?'⬆️':'⬇️'}</div>
+      <div style="flex:1;margin:0 14px;min-width:0">
+        <div style="font-weight:600;font-size:14px;display:flex;align-items:center;flex-wrap:wrap">${t.description}${badge}</div>
+        <div class="text-muted" style="font-size:12px;margin-top:2px">${fmt(t.date)} · ${t.method||'—'}${cl?' · '+cl.name:''}</div>
+      </div>
+      <div class="bebas" style="font-size:22px;color:${col};flex-shrink:0">${t.type==='entrata'?'+':'-'}${fmtMoney(t.amount)}</div>
+      ${!isAuto?`<button class="btn btn-ghost" style="margin-left:8px;flex-shrink:0;color:var(--danger)" onclick="deleteTransaction('${t.id}')">✕</button>`:`<div style="width:38px"></div>`}
+    </div>`;
+  }).join('');
+}
+function setTxType(type){
+  txType=type;
+  const e=document.getElementById('tx-type-entrata'),u=document.getElementById('tx-type-uscita');
+  if(type==='entrata'){e.style.cssText='flex:1;border-radius:50px;border:2px solid var(--success);color:var(--success);background:rgba(46,204,113,.1);font-weight:600;font-family:inherit;font-size:14px';u.style.cssText='flex:1;border-radius:50px;border:1.5px solid var(--border);color:var(--muted);background:transparent;font-weight:500;font-family:inherit;font-size:14px';}
+  else{u.style.cssText='flex:1;border-radius:50px;border:2px solid var(--danger);color:var(--danger);background:rgba(255,59,59,.1);font-weight:600;font-family:inherit;font-size:14px';e.style.cssText='flex:1;border-radius:50px;border:1.5px solid var(--border);color:var(--muted);background:transparent;font-weight:500;font-family:inherit;font-size:14px';}
+}
+function openTransactionModal(){
+  txType='entrata';setTxType('entrata');
+  document.getElementById('tx-desc').value='';document.getElementById('tx-amount').value='';document.getElementById('tx-date').value=todayStr();document.getElementById('tx-method').value='contanti';
+  document.getElementById('tx-client').innerHTML='<option value="">Nessuno</option>'+DB.clients.map(c=>`<option value="${c.id}">${c.name}</option>`).join('');
+  document.getElementById('tx-client').value='';
+  document.getElementById('transaction-modal').classList.remove('hidden');
+}
+function closeTxModal(){document.getElementById('transaction-modal').classList.add('hidden');}
+function saveTransaction(){
+  const desc=document.getElementById('tx-desc').value.trim(),amount=document.getElementById('tx-amount').value;
+  if(!desc||!amount)return alert('Compila descrizione e importo');
+  const t={id:uid(),type:txType,description:desc,amount,date:document.getElementById('tx-date').value,method:document.getElementById('tx-method').value,clientId:document.getElementById('tx-client').value};
+  const transactions=DB.transactions;transactions.push(t);DB.transactions=transactions;closeTxModal();renderAccounting();
+}
+async function deleteTransaction(id){var _id=id;if(!await customConfirm('Eliminare questo movimento dalla contabilità?','🗑 ELIMINA MOVIMENTO'))return;DB.transactions=DB.transactions.filter(t=>t.id!==_id);renderAccounting();}
+
+// ─── MOBILE ───────────────────────────────────────────────────────────────────
+const PAGE_TITLES = {dashboard:'HOME', leads:'FITACTIVE LEADS', stats:'STATISTICHE', calendar:'AGENDA', clients:'CLIENTI', packages:'PACCHETTI', accounting:'CASSA', settings:'IMPOSTAZIONI'};
+function isMobile(){ return window.innerWidth <= 700; }
+
+function updateMobileUI(page) {
+  if (!isMobile()) return;
+  // Show mobile header
+  const mh = document.getElementById('mobile-header');
+  if (mh) { mh.style.display = 'flex'; }
+  // Update mobile title
+  const mt = document.getElementById('mobile-page-title');
+  if (mt) mt.textContent = PAGE_TITLES[page] || page.toUpperCase();
+  // Update bottom nav
+  document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
+  const active = document.getElementById('bnav-'+page);
+  if (active) active.classList.add('active');
+  // Add top padding for fixed header
+  document.getElementById('main').style.paddingTop = '64px';
+}
+
+// ─── BACKUP ───────────────────────────────────────────────────────────────────
+function openBackupModal() {
+  document.getElementById('backup-modal').classList.remove('hidden');
+  document.getElementById('backup-status').textContent = '';
+}
+
+function exportBackup() {
+  const data = {
+    version: 1,
+    exportDate: new Date().toISOString(),
+    clients: DB.clients,
+    sessions: DB.sessions,
+    packages: DB.packages,
+    transactions: DB.transactions,
+    deductions: DB.deductions,
+    payments: DB.payments,
+    profile: JSON.parse(localStorage.getItem('pt_profile')||'{}'),
+    photos: DB.photos,
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const dateStr = new Date().toLocaleDateString('it-IT').replace(/\//g,'-');
+  a.href = url; a.download = 'pt-manager-backup-' + dateStr + '.json';
+  a.click(); URL.revokeObjectURL(url);
+  const st = document.getElementById('backup-status');
+  st.style.background = 'rgba(46,204,113,.12)';
+  st.style.color = 'var(--success)';
+  st.textContent = '✅ Backup scaricato! Salvalo in un posto sicuro (Google Drive, iCloud...).';
+}
+
+function importBackup(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) throw new Error('File non valido');
+      if (!await customConfirm('Sovrascrivere tutti i dati attuali con il backup? I dati correnti saranno sostituiti.','⚠️ RIPRISTINA BACKUP','Sì, ripristina','btn-primary')) return;
+      if (data.clients) DB.clients = data.clients;
+      if (data.sessions) DB.sessions = data.sessions;
+      if (data.packages) DB.packages = data.packages;
+      if (data.transactions) DB.transactions = data.transactions;
+      if (data.deductions) DB.deductions = data.deductions;
+      if (data.payments) DB.payments = data.payments;
+      if (data.leads) DB.leads = data.leads;
+      if (data.photos) DB.photos = data.photos;
+      const st = document.getElementById('backup-status');
+      st.style.background = 'rgba(46,204,113,.12)'; st.style.color = 'var(--success)';
+      st.textContent = '✅ Dati ripristinati con successo!';
+      setTimeout(() => { document.getElementById('backup-modal').classList.add('hidden'); renderPage(currentPage); }, 1500);
+    } catch(err) {
+      const st = document.getElementById('backup-status');
+      st.style.background = 'rgba(255,59,59,.12)'; st.style.color = 'var(--danger)';
+      st.textContent = '❌ Errore: file non valido o corrotto.';
+    }
+  };
+  reader.readAsText(file);
+}
+
+async function confirmReset() {
+  if (!await customConfirm('ATTENZIONE: questa azione cancellerà TUTTI i tuoi dati in modo irreversibile. Hai fatto un backup?','⚠️ CANCELLA TUTTO','Sì, cancella tutto','btn-danger')) return;
+  ['pt_clients','pt_sessions','pt_packages','pt_transactions','pt_deductions','pt_payments'].forEach(k => localStorage.removeItem(k));
+  const st = document.getElementById('backup-status');
+  st.style.background = 'rgba(255,59,59,.12)'; st.style.color = 'var(--danger)';
+  st.textContent = '🗑 Tutti i dati eliminati.';
+  setTimeout(() => { document.getElementById('backup-modal').classList.add('hidden'); renderPage(currentPage); }, 1500);
+}
+
+// Init mobile on load
+window.addEventListener('DOMContentLoaded', () => { updateMobileUI(currentPage); });
+window.addEventListener('resize', () => { updateMobileUI(currentPage); });
+
+// ─── PAGAMENTI / ACCONTI ──────────────────────────────────────────────────────
+function openAccontoModal(pkgId) {
+  accontoPkgId = pkgId;
+  const p = DB.packages.find(x => x.id === pkgId);
+  const cl = DB.clients.find(c => c.id === p.clientId);
+  const paid = DB.payments.filter(py => py.packageId === pkgId).reduce((s,py) => s + +py.amount, 0);
+  const owed = Math.max(0, (+p.price||0) - paid);
+  document.getElementById('acconto-pkg-info').innerHTML = `
+    <div style="font-weight:700;font-size:15px;margin-bottom:4px">${p.name}</div>
+    <div class="text-muted" style="font-size:13px;margin-bottom:12px">👤 ${cl?.name||'—'}</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap">
+      <div><div class="bebas" style="font-size:22px;color:var(--accent)">${fmtMoney(p.price)}</div><div class="text-muted" style="font-size:11px;letter-spacing:1px">TOTALE</div></div>
+      <div><div class="bebas" style="font-size:22px;color:var(--success)">${fmtMoney(paid)}</div><div class="text-muted" style="font-size:11px;letter-spacing:1px">PAGATO</div></div>
+      <div><div class="bebas" style="font-size:22px;color:var(--warning)">${fmtMoney(owed)}</div><div class="text-muted" style="font-size:11px;letter-spacing:1px">RIMANENTE</div></div>
+    </div>`;
+  document.getElementById('acconto-amount').value = '';
+  document.getElementById('acconto-date').value = todayStr();
+  document.getElementById('acconto-method').value = 'contanti';
+  document.getElementById('acconto-note').value = '';
+  document.getElementById('acconto-preview').style.display = 'none';
+  document.getElementById('acconto-modal').classList.remove('hidden');
+}
+
+function updateAccontoPreview() {
+  const p = DB.packages.find(x => x.id === accontoPkgId);
+  const paid = DB.payments.filter(py => py.packageId === accontoPkgId).reduce((s,py) => s + +py.amount, 0);
+  const thisAmt = parseFloat(document.getElementById('acconto-amount').value) || 0;
+  const total = +p.price || 0;
+  const newRemaining = Math.max(0, total - paid - thisAmt);
+  const preview = document.getElementById('acconto-preview');
+  if (thisAmt > 0) {
+    preview.style.display = 'block';
+    document.getElementById('prev-total').textContent = fmtMoney(total);
+    document.getElementById('prev-paid').textContent = fmtMoney(paid);
+    document.getElementById('prev-this').textContent = fmtMoney(thisAmt);
+    const remEl = document.getElementById('prev-remaining');
+    remEl.textContent = fmtMoney(newRemaining);
+    remEl.style.color = newRemaining === 0 ? 'var(--success)' : 'var(--warning)';
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function closeAccontoModal() { document.getElementById('acconto-modal').classList.add('hidden'); accontoPkgId = null; }
+
+function saveAcconto() {
+  const amount = document.getElementById('acconto-amount').value;
+  const date = document.getElementById('acconto-date').value;
+  if (!amount || +amount <= 0) return alert('Inserisci un importo valido');
+  if (!date) return alert('Inserisci la data del pagamento');
+  const method = document.getElementById('acconto-method').value;
+  const note = document.getElementById('acconto-note').value;
+  const p = DB.packages.find(x => x.id === accontoPkgId);
+  const cl = DB.clients.find(c => c.id === p?.clientId);
+  const pyId = uid();
+  // Save payment record
+  const py = { id: pyId, packageId: accontoPkgId, amount: +amount, date, method, note, createdAt: todayStr() };
+  const payments = DB.payments; payments.push(py); DB.payments = payments;
+  // Auto-create transaction in contabilità
+  const paid = DB.payments.filter(py2 => py2.packageId === accontoPkgId).reduce((s,py2) => s + +py2.amount, 0);
+  const total = +p?.price || 0;
+  const isSaldo = paid >= total && total > 0;
+  const txDesc = isSaldo
+    ? `Saldo pacchetto — ${p?.name || ''}${cl ? ' (' + cl.name + ')' : ''}`
+    : `Acconto pacchetto — ${p?.name || ''}${cl ? ' (' + cl.name + ')' : ''}${note ? ' · ' + note : ''}`;
+  const t = { id: uid(), type: 'entrata', description: txDesc, amount: +amount, date, method, clientId: p?.clientId || '', sourceId: pyId, sourceType: 'package_payment', auto: true };
+  const transactions = DB.transactions; transactions.push(t); DB.transactions = transactions;
+  closeAccontoModal();
+  renderPackages();
+}
+
+async function deletePayment(id, pkgId) {
+  var _id=id;if (!await customConfirm('Eliminare questo pagamento? Verrà rimosso anche dalla contabilità.','🗑 ELIMINA PAGAMENTO')) return;
+  DB.payments = DB.payments.filter(p => p.id !== _id);
+  DB.transactions = DB.transactions.filter(t => t.sourceId !== _id);
+  renderPackages();
+}
+
+
+// ─── CUSTOM CONFIRM ───────────────────────────────────────────────────────────
+let _confirmCallback = null;
+function customConfirm(message, title, okLabel, okClass) {
+  title = title || 'SEI SICURO?';
+  okLabel = okLabel || 'Sì, elimina';
+  okClass = okClass || 'btn-danger';
+  return new Promise(function(resolve) {
+    _confirmCallback = resolve;
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-message').textContent = message;
+    var okBtn = document.getElementById('confirm-ok-btn');
+    okBtn.textContent = okLabel;
+    okBtn.className = 'btn ' + okClass;
+    document.getElementById('confirm-modal').style.display = 'flex';
+    document.getElementById('confirm-modal').classList.remove('hidden');
+  });
+}
+function _confirmResolve(result) {
+  document.getElementById('confirm-modal').style.display = 'none';
+  document.getElementById('confirm-modal').classList.add('hidden');
+  var cb = _confirmCallback;
+  _confirmCallback = null;
+  if (cb) cb(result);
+}
+// ESC key closes confirm as false
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') _confirmResolve(false);
+});
+
+
+// ─── NOTIFICHE PUSH LOCALI ────────────────────────────────────────────────────
+async function requestNotifPermission() {
+  if (!('Notification' in window)) return false;
+  if (Notification.permission === 'granted') return true;
+  if (Notification.permission === 'denied') return false;
+  const p = await Notification.requestPermission();
+  return p === 'granted';
+}
+
+function scheduleSessionNotif(session) {
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  if (session.done) return;
+  const sessionDt = new Date(session.date + 'T' + (session.time || '09:00') + ':00');
+  const notifTime = new Date(sessionDt.getTime() - 60 * 60 * 1000); // 1h before
+  const now = new Date();
+  if (notifTime <= now) return;
+  const delay = notifTime.getTime() - now.getTime();
+  const cl = DB.clients.find(c => c.id === session.clientId);
+  const clientName = cl ? cl.name.split(' ')[0] : 'Cliente';
+  // Store timeout id so we can cancel it
+  const stored = JSON.parse(localStorage.getItem('pt_notif_timeouts') || '{}');
+  // Cancel existing
+  if (stored[session.id]) clearTimeout(stored[session.id]);
+  const tId = setTimeout(() => {
+    new Notification('🏋️ PT Manager — Sessione fra 1 ora', {
+      body: clientName + ' alle ' + session.time,
+      icon: '/icon-192.png',
+      badge: '/icon-192.png',
+      tag: 'session-' + session.id,
+    });
+  }, delay);
+  stored[session.id] = tId; // Note: timeoutIds don't persist across page loads
+  // Store session notif info for SW-based scheduling (fallback)
+  const notifData = JSON.parse(localStorage.getItem('pt_scheduled_notifs') || '{}');
+  notifData[session.id] = { time: notifTime.toISOString(), clientName, sessionTime: session.time, sessionId: session.id };
+  localStorage.setItem('pt_scheduled_notifs', JSON.stringify(notifData));
+}
+
+function cancelSessionNotif(sessionId) {
+  const notifData = JSON.parse(localStorage.getItem('pt_scheduled_notifs') || '{}');
+  delete notifData[sessionId];
+  localStorage.setItem('pt_scheduled_notifs', JSON.stringify(notifData));
+}
+
+function rescheduleAllNotifs() {
+  // Re-check all future sessions on app load
+  const notifData = JSON.parse(localStorage.getItem('pt_scheduled_notifs') || '{}');
+  const now = new Date();
+  DB.sessions.forEach(s => {
+    if (s.done) return;
+    const sessionDt = new Date(s.date + 'T' + (s.time || '09:00') + ':00');
+    const notifTime = new Date(sessionDt.getTime() - 60 * 60 * 1000);
+    if (notifTime > now) scheduleSessionNotif(s);
+  });
+  // Clean up old entries
+  Object.keys(notifData).forEach(id => {
+    const t = new Date(notifData[id].time);
+    if (t < now) delete notifData[id];
+  });
+  localStorage.setItem('pt_scheduled_notifs', JSON.stringify(notifData));
+}
+
+async function initNotifications() {
+  const granted = await requestNotifPermission();
+  if (granted) rescheduleAllNotifs();
+}
+
+// ─── PDF RICEVUTA PAGAMENTO ───────────────────────────────────────────────────
+function generateReceiptPDF(paymentId, packageId) {
+  const py = DB.payments.find(p => p.id === paymentId);
+  const pkg = DB.packages.find(p => p.id === packageId);
+  const cl = DB.clients.find(c => c.id === pkg?.clientId);
+  if (!py || !pkg || !cl) return;
+
+  const totalPaid = DB.payments.filter(p => p.packageId === packageId).reduce((s,p) => s + +p.amount, 0);
+  const remaining = Math.max(0, (+pkg.price||0) - totalPaid);
+  const isSaldo = remaining === 0;
+  const receiptNum = 'PT-' + new Date().getFullYear() + '-' + String(DB.payments.indexOf(py)+1).padStart(4,'0');
+
+  const html = `<!DOCTYPE html>
+<html lang="it"><head><meta charset="UTF-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #fff; color: #1a1a1a; padding: 40px; max-width: 600px; margin: 0 auto; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 40px; border-bottom: 3px solid #ff6b00; padding-bottom: 20px; }
+  .logo { font-size: 42px; font-weight: 900; letter-spacing: 3px; color: #ff6b00; line-height: 1; }
+  .logo span { color: #1a1a1a; font-size: 14px; letter-spacing: 2px; display: block; margin-top: 4px; }
+  .receipt-num { text-align: right; font-size: 13px; color: #666; }
+  .receipt-num strong { font-size: 16px; color: #1a1a1a; display: block; }
+  .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; letter-spacing: 1px; margin-top: 8px; background: ${isSaldo ? '#e8f8ef' : '#fff3e6'}; color: ${isSaldo ? '#27ae60' : '#ff6b00'}; border: 1.5px solid ${isSaldo ? '#27ae60' : '#ff6b00'}; }
+  .section { margin-bottom: 28px; }
+  .section-title { font-size: 11px; font-weight: 700; letter-spacing: 2px; color: #999; text-transform: uppercase; margin-bottom: 10px; }
+  .client-name { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .client-info { font-size: 13px; color: #555; line-height: 1.7; }
+  .pkg-box { background: #f8f8f8; border-radius: 10px; padding: 16px 20px; margin-bottom: 28px; }
+  .pkg-name { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .amounts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 16px; }
+  .amount-box { background: #fff; border-radius: 8px; padding: 12px 16px; border: 1.5px solid #eee; }
+  .amount-label { font-size: 10px; color: #999; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+  .amount-value { font-size: 22px; font-weight: 800; margin-top: 4px; }
+  .this-payment { background: #fff8f0; border-color: #ff6b00; }
+  .this-payment .amount-value { color: #ff6b00; }
+  .remaining-zero { background: #f0fff6; border-color: #27ae60; }
+  .remaining-zero .amount-value { color: #27ae60; }
+  .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-label { color: #666; }
+  .detail-value { font-weight: 600; }
+  .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 11px; color: #999; text-align: center; line-height: 1.8; }
+  .print-btn { position: fixed; top: 20px; right: 20px; background: #ff6b00; color: #fff; border: none; padding: 12px 24px; border-radius: 50px; font-size: 14px; font-weight: 700; cursor: pointer; }
+  @media print { .print-btn { display: none; } body { padding: 20px; } }
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨 Stampa / PDF</button>
+<div class="header">
+  <div class="logo">PT<span>MANAGER</span></div>
+  <div class="receipt-num">
+    <strong>${receiptNum}</strong>
+    Ricevuta di pagamento<br>
+    ${fmt(py.date)}
+    <div class="badge">${isSaldo ? '✅ SALDO COMPLETO' : '💳 ACCONTO'}</div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">Cliente</div>
+  <div class="client-name">${cl.name}</div>
+  <div class="client-info">
+    ${cl.phone ? '📞 ' + cl.phone + '<br>' : ''}
+    ${cl.email ? '📧 ' + cl.email + '<br>' : ''}
+    ${cl.cf ? '🪪 CF: ' + cl.cf + '<br>' : ''}
+    ${[cl.address, cl.city, cl.cap, cl.prov ? '('+cl.prov+')' : ''].filter(Boolean).join(', ')}
+  </div>
+</div>
+<div class="pkg-box">
+  <div class="section-title">Pacchetto</div>
+  <div class="pkg-name">${pkg.name}</div>
+  <div class="detail-row"><span class="detail-label">Sessioni totali</span><span class="detail-value">${pkg.totalSessions}</span></div>
+  <div class="detail-row"><span class="detail-label">Periodo</span><span class="detail-value">${fmt(pkg.startDate)}${pkg.endDate ? ' → ' + fmt(pkg.endDate) : ''}</span></div>
+  <div class="amounts">
+    <div class="amount-box this-payment">
+      <div class="amount-label">Questo pagamento</div>
+      <div class="amount-value">€ ${Number(py.amount).toFixed(2)}</div>
+    </div>
+    <div class="amount-box ${remaining === 0 ? 'remaining-zero' : ''}">
+      <div class="amount-label">${remaining === 0 ? '✅ Saldato' : 'Rimanente'}</div>
+      <div class="amount-value">€ ${remaining.toFixed(2)}</div>
+    </div>
+  </div>
+</div>
+<div class="section">
+  <div class="section-title">Dettagli pagamento</div>
+  <div class="detail-row"><span class="detail-label">Data</span><span class="detail-value">${fmt(py.date)}</span></div>
+  <div class="detail-row"><span class="detail-label">Metodo</span><span class="detail-value">${py.method || '—'}</span></div>
+  <div class="detail-row"><span class="detail-label">Totale pacchetto</span><span class="detail-value">€ ${Number(pkg.price||0).toFixed(2)}</span></div>
+  <div class="detail-row"><span class="detail-label">Totale versato</span><span class="detail-value" style="color:#27ae60">€ ${totalPaid.toFixed(2)}</span></div>
+  ${py.note ? '<div class="detail-row"><span class="detail-label">Note</span><span class="detail-value">' + py.note + '</span></div>' : ''}
+</div>
+<div class="footer">
+  Documento generato da PT Manager · ${new Date().toLocaleDateString('it-IT')}<br>
+  Questa ricevuta certifica il pagamento ricevuto per il servizio indicato.
+</div>
+</body></html>`;
+
+  openPrintWindow(html, 'ricevuta-' + cl.name.replace(/\s+/g,'-').toLowerCase() + '-' + py.date);
+}
+
+
+
+
+// ─── GDPR / LIBERATORIA PDF ───────────────────────────────────────────────────
+function generateGDPR(clientId) {
+  const cl = DB.clients.find(c => c.id === clientId);
+  if (!cl) return;
+  const today = new Date().toLocaleDateString('it-IT');
+  const loc = [cl.address, cl.city, cl.cap, cl.prov ? '('+cl.prov+')' : ''].filter(Boolean).join(', ');
+  const age = cl.birthdate ? (() => {
+    const b = new Date(cl.birthdate); const t = new Date();
+    let a = t.getFullYear()-b.getFullYear();
+    if(t.getMonth()-b.getMonth()<0||(t.getMonth()-b.getMonth()===0&&t.getDate()<b.getDate()))a--;
+    return a;
+  })() : '___';
+
+  const html = `<!DOCTYPE html>
+<html lang="it"><head><meta charset="UTF-8">
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family: 'Times New Roman', serif; background:#fff; color:#1a1a1a; padding:40px; font-size:13px; line-height:1.7; max-width:720px; margin:0 auto; }
+  h1 { font-size:18px; text-align:center; margin-bottom:6px; text-transform:uppercase; letter-spacing:1px; }
+  h2 { font-size:14px; text-transform:uppercase; letter-spacing:1px; margin:28px 0 10px; border-bottom:1.5px solid #1a1a1a; padding-bottom:4px; }
+  .header { text-align:center; margin-bottom:32px; border-bottom:2px solid #ff6b00; padding-bottom:20px; }
+  .pt-logo { font-size:36px; font-weight:900; color:#ff6b00; letter-spacing:4px; font-family:Arial,sans-serif; }
+  .subtitle { font-size:11px; letter-spacing:3px; color:#666; text-transform:uppercase; margin-top:4px; }
+  .parties { background:#f9f9f9; border:1px solid #ddd; border-radius:6px; padding:16px 20px; margin:20px 0; }
+  .field-row { display:flex; gap:10px; margin-bottom:8px; }
+  .field-label { font-weight:700; min-width:130px; }
+  .field-value { flex:1; border-bottom:1px solid #999; padding-bottom:2px; min-height:20px; }
+  p { margin-bottom:10px; text-align:justify; }
+  .checkbox-item { display:flex; gap:12px; margin:8px 0; align-items:flex-start; }
+  .checkbox-box { width:16px; height:16px; border:2px solid #1a1a1a; flex-shrink:0; margin-top:2px; }
+  .sign-row { display:grid; grid-template-columns:1fr 1fr; gap:40px; margin-top:40px; }
+  .sign-box { border-top:1px solid #1a1a1a; padding-top:8px; font-size:12px; color:#666; }
+  .print-btn { position:fixed; top:20px; right:20px; background:#ff6b00; color:#fff; border:none; padding:12px 24px; border-radius:50px; font-size:14px; font-weight:700; cursor:pointer; font-family:Arial,sans-serif; }
+  @media print { .print-btn { display:none; } body { padding:20px; } }
+</style></head><body>
+<button class="print-btn" onclick="window.print()">🖨 Stampa / PDF</button>
+<div class="header">
+  <div class="pt-logo">PT MANAGER</div>
+  <div class="subtitle">Modulo consenso e liberatoria</div>
+</div>
+<h1>Consenso al trattamento dei dati personali<br>e liberatoria sportiva</h1>
+<p style="text-align:center;color:#666;font-size:12px">Redatto il ${today} · Regolamento UE 2016/679 (GDPR)</p>
+
+<div class="parties">
+  <div class="field-row"><span class="field-label">Il/La sottoscritto/a:</span><span class="field-value">${cl.name}</span></div>
+  <div class="field-row"><span class="field-label">Nato/a il:</span><span class="field-value">${cl.birthdate ? new Date(cl.birthdate+'T12:00:00').toLocaleDateString('it-IT') : '_______________'} (${age} anni)</span></div>
+  <div class="field-row"><span class="field-label">Residente in:</span><span class="field-value">${loc || '_______________'}</span></div>
+  <div class="field-row"><span class="field-label">Codice Fiscale:</span><span class="field-value">${cl.cf || '_______________'}</span></div>
+  <div class="field-row"><span class="field-label">Telefono:</span><span class="field-value">${cl.phone || '_______________'}</span></div>
+  <div class="field-row"><span class="field-label">Email:</span><span class="field-value">${cl.email || '_______________'}</span></div>
+</div>
+
+<h2>Parte I — Consenso GDPR (Reg. UE 2016/679)</h2>
+<p>Ai sensi e per gli effetti del Regolamento Europeo sulla Protezione dei Dati Personali (GDPR), dichiaro di essere stato/a informato/a che i miei dati personali verranno trattati dal Personal Trainer titolare del presente documento per le seguenti finalità:</p>
+<div class="checkbox-item"><div class="checkbox-box"></div><span><strong>Gestione del rapporto professionale</strong>: pianificazione allenamenti, monitoraggio progressi, contabilità.</span></div>
+<div class="checkbox-item"><div class="checkbox-box"></div><span><strong>Comunicazioni di servizio</strong>: promemoria appuntamenti, aggiornamenti su pacchetti e sedute.</span></div>
+<div class="checkbox-item"><div class="checkbox-box"></div><span><strong>Fotografie e video dei progressi</strong> (solo con esplicito consenso separato)</span></div>
+<p style="margin-top:12px">Dichiaro di essere a conoscenza dei miei diritti (accesso, rettifica, cancellazione, limitazione, portabilità e opposizione) e di poterli esercitare in qualsiasi momento.</p>
+
+<h2>Parte II — Liberatoria Sportiva e Stato di Salute</h2>
+<p>Il/La sottoscritto/a dichiara sotto la propria responsabilità:</p>
+<div class="checkbox-item"><div class="checkbox-box"></div><span>Di essere in buone condizioni di salute e di non avere controindicazioni mediche alla pratica dell'attività fisica.</span></div>
+<div class="checkbox-item"><div class="checkbox-box"></div><span>Di aver informato il Personal Trainer di eventuali patologie, infortuni pregressi o limitazioni fisiche.</span></div>
+<div class="checkbox-item"><div class="checkbox-box"></div><span>Di partecipare alle sessioni di allenamento in modo volontario, assumendosi la responsabilità dei rischi connessi all'attività fisica.</span></div>
+<div class="checkbox-item"><div class="checkbox-box"></div><span>Di esonerare il Personal Trainer da responsabilità per eventuali infortuni derivanti da informazioni errate o incomplete fornite dal cliente stesso.</span></div>
+<p style="margin-top:10px">Patologie / Infortuni dichiarati: <span style="border-bottom:1px solid #999;display:inline-block;min-width:300px">&nbsp;</span></p>
+<p>Farmaci assunti: <span style="border-bottom:1px solid #999;display:inline-block;min-width:360px">&nbsp;</span></p>
+
+<h2>Parte III — Consenso Foto e Video Progressi</h2>
+<div class="checkbox-item"><div class="checkbox-box"></div><span><strong>ACCONSENTO</strong> alla raccolta di foto/video per il monitoraggio dei progressi fisici, ad uso esclusivo del Personal Trainer.</span></div>
+<div class="checkbox-item"><div class="checkbox-box"></div><span><strong>ACCONSENTO</strong> alla pubblicazione anonima di foto/video a scopo promozionale sui canali social del Personal Trainer.</span></div>
+<div class="checkbox-item"><div class="checkbox-box"></div><span><strong>NON ACCONSENTO</strong> a nessun utilizzo di immagini che mi riguardano.</span></div>
+
+<div class="sign-row">
+  <div class="sign-box">Data e luogo<br><br>${today}, _______________</div>
+  <div class="sign-box">Firma del Cliente<br><br><br></div>
+</div>
+<div class="sign-row" style="margin-top:24px">
+  <div class="sign-box">Firma del Personal Trainer<br><br><br></div>
+  <div class="sign-box">Nota: conservare copia firmata<br>ai sensi del GDPR art. 7</div>
+</div>
+<!-- PHOTO VIEWER MODAL -->
+<div id="photo-modal" class="overlay hidden" onclick="this.classList.add('hidden')">
+  <div style="max-width:90vw;max-height:90vh;position:relative" onclick="event.stopPropagation()">
+    <img id="photo-modal-img" src="" style="max-width:90vw;max-height:80vh;border-radius:var(--radius);object-fit:contain">
+    <div id="photo-modal-caption" style="text-align:center;color:var(--muted);font-size:13px;margin-top:10px"></div>
+    <button onclick="document.getElementById('photo-modal').classList.add('hidden')" style="position:absolute;top:-16px;right:-16px;background:var(--danger);border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer">✕</button>
+  </div>
+</div>
+
+<!-- GLOBAL SEARCH -->
+<div id="global-search-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;padding:20px;backdrop-filter:blur(4px)" onclick="this.classList.add('hidden')">
+  <div style="max-width:600px;margin:0 auto" onclick="event.stopPropagation()">
+    <div style="position:relative;margin-bottom:16px">
+      <input id="global-search-input" type="text" placeholder="Cerca clienti, sessioni, pacchetti..." oninput="globalSearch(this.value)"
+        style="border-radius:50px;padding:14px 20px;font-size:16px;border-color:var(--accent);background:var(--surface)">
+      <button onclick="document.getElementById('global-search-overlay').classList.add('hidden')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div id="global-search-results" style="display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto"></div>
+  </div>
+</div>
+
+</body></html>`;
+
+  const blob = new Blob([html], {type: 'text/html'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'liberatoria-gdpr-' + cl.name.replace(/\s+/g,'-').toLowerCase() + '-' + todayStr() + '.html';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── GOOGLE CALENDAR ─────────────────────────────────────────────────────────
+function addToGoogleCalendar(session) {
+  const cl = DB.clients.find(c => c.id === session.clientId);
+  const clientName = cl ? cl.name : 'Cliente';
+  const startDt = session.date.replace(/-/g,'') + 'T' + session.time.replace(':','') + '00';
+  const endMin = (parseInt(session.time.split(':')[0])*60 + parseInt(session.time.split(':')[1]) + (session.duration||60));
+  const endH = String(Math.floor(endMin/60)).padStart(2,'0');
+  const endM = String(endMin%60).padStart(2,'0');
+  const endDt = session.date.replace(/-/g,'') + 'T' + endH + endM + '00';
+  const title = encodeURIComponent('PT Session — ' + clientName);
+  const details = encodeURIComponent('Sessione di allenamento\nDurata: ' + (session.duration||60) + ' min' + (session.note ? '\nNote: ' + session.note : ''));
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startDt}/${endDt}&details=${details}`;
+  window.open(url, '_blank');
+}
+
+function exportToICS(session) {
+  const cl = DB.clients.find(c => c.id === session.clientId);
+  const clientName = cl ? cl.name : 'Cliente';
+  const startDt = session.date.replace(/-/g,'') + 'T' + session.time.replace(':','') + '00';
+  const endMin = (parseInt(session.time.split(':')[0])*60 + parseInt(session.time.split(':')[1]) + (session.duration||60));
+  const endH = String(Math.floor(endMin/60)).padStart(2,'0');
+  const endM = String(endMin%60).padStart(2,'0');
+  const endDt = session.date.replace(/-/g,'') + 'T' + endH + endM + '00';
+  const ics = [
+    'BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//PT Manager//IT',
+    'BEGIN:VEVENT',
+    'UID:' + session.id + '@ptmanager',
+    'DTSTAMP:' + new Date().toISOString().replace(/[-:.]/g,'').slice(0,15) + 'Z',
+    'DTSTART:' + startDt,
+    'DTEND:' + endDt,
+    'SUMMARY:PT Session — ' + clientName,
+    'DESCRIPTION:Sessione ' + (session.duration||60) + ' min' + (session.note ? ' — ' + session.note : ''),
+    'END:VEVENT','END:VCALENDAR'
+  ].join('\r\n');
+  const blob = new Blob([ics], {type:'text/calendar'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'sessione-' + clientName.replace(/\s+/g,'-').toLowerCase() + '-' + session.date + '.ics';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ─── CALENDARIO SYNC ─────────────────────────────────────────────────────────
+
+function buildICS(sessions, includeAll) {
+  const clients = DB.clients;
+  const now = new Date();
+  const lines = [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    'PRODID:-//PT Manager//IT',
+    'CALSCALE:GREGORIAN',
+    'METHOD:PUBLISH',
+    'X-WR-CALNAME:PT Manager — Sessioni',
+    'X-WR-TIMEZONE:Europe/Rome',
+  ];
+
+  const toICSDate = (dateStr, timeStr) => {
+    const d = dateStr.replace(/-/g,'');
+    const t = (timeStr||'09:00').replace(':','') + '00';
+    return d + 'T' + t;
+  };
+  const addMinutes = (dateStr, timeStr, mins) => {
+    const dt = new Date(dateStr + 'T' + (timeStr||'09:00') + ':00');
+    dt.setMinutes(dt.getMinutes() + (mins||60));
+    const pad = n => String(n).padStart(2,'0');
+    return dt.toISOString().replace(/[-:]/g,'').slice(0,15);
+  };
+  const nowStamp = now.toISOString().replace(/[-:]/g,'').slice(0,15) + 'Z';
+
+  const filtered = includeAll ? sessions : sessions.filter(s => {
+    const d = new Date(s.date + 'T' + (s.time||'09:00') + ':00');
+    return d > now && !s.done;
+  });
+
+  filtered.forEach(s => {
+    const cl = clients.find(c => c.id === s.clientId);
+    const name = cl ? cl.name : 'Cliente';
+    const phone = cl?.phone || '';
+    const start = toICSDate(s.date, s.time);
+    const end = addMinutes(s.date, s.time, s.duration||60);
+    const desc = [
+      'Sessione PT con ' + name,
+      s.duration ? 'Durata: ' + s.duration + ' min' : '',
+      phone ? 'Tel: ' + phone : '',
+      s.note ? 'Note: ' + s.note : '',
+      s.done ? '✓ Completata' : '',
+    ].filter(Boolean).join('\n');
+
+    lines.push('BEGIN:VEVENT');
+    lines.push('UID:' + s.id + '@ptmanager');
+    lines.push('DTSTAMP:' + nowStamp);
+    lines.push('DTSTART:' + start);
+    lines.push('DTEND:' + end);
+    lines.push('SUMMARY:PT — ' + name);
+    lines.push('DESCRIPTION:' + desc.replace(/,/g,'\,').replace(/;/g,'\;'));
+    if (phone) lines.push('CONTACT:' + phone);
+    lines.push('STATUS:' + (s.done ? 'COMPLETED' : 'CONFIRMED'));
+    lines.push('BEGIN:VALARM');
+    lines.push('TRIGGER:-PT1H');
+    lines.push('ACTION:DISPLAY');
+    lines.push('DESCRIPTION:Sessione PT fra 1 ora con ' + name);
+    lines.push('END:VALARM');
+    lines.push('END:VEVENT');
+  });
+
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+
+function downloadICS(icsContent, filename) {
+  const blob = new Blob([icsContent], {type: 'text/calendar;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function showSyncStatus(msg, color) {
+  const el = document.getElementById('sync-status');
+  el.style.display = 'block';
+  el.style.background = color + '18';
+  el.style.color = color;
+  el.style.border = '1px solid ' + color + '44';
+  el.textContent = msg;
+  setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+function exportAllICS() {
+  // Export future sessions only → open in Apple Calendar
+  const sessions = DB.sessions;
+  const future = sessions.filter(s => {
+    const d = new Date(s.date + 'T' + (s.time||'09:00') + ':00');
+    return d > new Date() && !s.done;
+  });
+  if (future.length === 0) {
+    showSyncStatus('⚠️ Nessuna sessione futura da esportare', 'var(--warning)');
+    return;
+  }
+  const ics = buildICS(sessions, false);
+  const dateStr = todayStr();
+  downloadICS(ics, 'pt-sessioni-future-' + dateStr + '.ics');
+  showSyncStatus('✅ File .ICS scaricato! Aprilo per aggiungere al Calendario iPhone.', 'var(--success)');
+}
+
+function copyCalendarURL() {
+  // Export ALL sessions (past + future)
+  const ics = buildICS(DB.sessions, true);
+  const dateStr = todayStr();
+  downloadICS(ics, 'pt-calendario-completo-' + dateStr + '.ics');
+  showSyncStatus('✅ Calendario completo esportato! Aprilo con Google Calendar, Outlook o Apple Calendar.', 'var(--success)');
+}
+
+function openAllGoogleCalendar() {
+  const sessions = DB.sessions;
+  const now = new Date();
+  const future = sessions.filter(s => {
+    const d = new Date(s.date + 'T' + (s.time||'09:00') + ':00');
+    return d > now && !s.done;
+  }).sort((a,b) => a.date.localeCompare(b.date)).slice(0, 10); // max 10 at once
+
+  if (future.length === 0) {
+    showSyncStatus('⚠️ Nessuna sessione futura da sincronizzare', 'var(--warning)');
+    return;
+  }
+
+  // Open first one immediately, queue the rest
+  let delay = 0;
+  future.forEach((s, i) => {
+    setTimeout(() => {
+      addToGoogleCalendar(s);
+    }, delay);
+    delay += 800; // 800ms between each to avoid popup blocker
+  });
+
+  showSyncStatus('📅 Apertura ' + future.length + ' sessioni su Google Calendar... Consenti i popup se richiesto.', '#4285f4');
+}
+
+
+// ─── SETTINGS ────────────────────────────────────────────────────────────────
+function loadSettings() {
+  // Google Calendar
+  const gcalOn = localStorage.getItem('pt_gcal_enabled') === 'true';
+  const gcalEmail = localStorage.getItem('pt_gcal_email') || '';
+  const toggle = document.getElementById('gcal-toggle');
+  if (toggle) {
+    toggle.checked = gcalOn;
+    updateToggleUI(gcalOn);
+    if (gcalOn) document.getElementById('gcal-setup').style.display = 'block';
+  }
+  const emailEl = document.getElementById('gcal-email');
+  if (emailEl && gcalEmail) emailEl.value = gcalEmail;
+  // PT Profile
+  const profile = JSON.parse(localStorage.getItem('pt_profile') || '{}');
+  ['pt-name','pt-piva','pt-phone','pt-email','pt-address'].forEach(id => {
+    const el = document.getElementById(id);
+    const key = id.replace('pt-','');
+    if (el && profile[key]) el.value = profile[key];
+  });
+}
+
+function updateToggleUI(on) {
+  const track = document.getElementById('gcal-toggle-track');
+  const thumb = document.getElementById('gcal-toggle-thumb');
+  if (!track || !thumb) return;
+  track.style.background = on ? '#4285f4' : 'var(--border)';
+  thumb.style.left = on ? '25px' : '3px';
+}
+
+function toggleGcal(on) {
+  localStorage.setItem('pt_gcal_enabled', on ? 'true' : 'false');
+  updateToggleUI(on);
+  document.getElementById('gcal-setup').style.display = on ? 'block' : 'none';
+}
+
+function saveGcalEmail() {
+  const email = document.getElementById('gcal-email').value;
+  localStorage.setItem('pt_gcal_email', email);
+  const st = document.getElementById('gcal-status');
+  st.style.display = 'block';
+  setTimeout(() => { st.style.display = 'none'; }, 2000);
+}
+
+function savePTProfile() {
+  const profile = {
+    name: document.getElementById('pt-name').value,
+    piva: document.getElementById('pt-piva').value,
+    phone: document.getElementById('pt-phone').value,
+    email: document.getElementById('pt-email').value,
+    address: document.getElementById('pt-address').value,
+  };
+  localStorage.setItem('pt_profile', JSON.stringify(profile));
+  const st = document.getElementById('pt-save-status');
+  if (st) { st.style.display = 'block'; setTimeout(() => { st.style.display = 'none'; }, 1500); }
+}
+
+function importBackupFromSettings(event) {
+  const file = event.target.files[0]; if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async function(e) {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.version) throw new Error('File non valido');
+      if (!await customConfirm('Sovrascrivere tutti i dati attuali con il backup?','⚠️ RIPRISTINA BACKUP','Sì, ripristina','btn-primary')) return;
+      if (data.clients) DB.clients = data.clients;
+      if (data.sessions) DB.sessions = data.sessions;
+      if (data.packages) DB.packages = data.packages;
+      if (data.transactions) DB.transactions = data.transactions;
+      if (data.deductions) DB.deductions = data.deductions;
+      if (data.payments) DB.payments = data.payments;
+      if (data.leads) DB.leads = data.leads;
+      if (data.photos) DB.photos = data.photos;
+      const st = document.getElementById('settings-backup-status');
+      st.style.display = 'block';
+      st.style.background = 'rgba(46,204,113,.12)';
+      st.style.color = 'var(--success)';
+      st.textContent = '✅ Dati ripristinati con successo!';
+      setTimeout(() => { st.style.display = 'none'; renderPage(currentPage); }, 1500);
+    } catch(err) {
+      const st = document.getElementById('settings-backup-status');
+      st.style.display = 'block';
+      st.style.background = 'rgba(255,59,59,.12)';
+      st.style.color = 'var(--danger)';
+      st.textContent = '❌ File non valido o corrotto.';
+    }
+  };
+  reader.readAsText(file);
+}
+
+// ─── PHOTOS ──────────────────────────────────────────────────────────────────
+// Extend DB with photos
+Object.defineProperty(DB, 'photos', {
+  get() { try{return JSON.parse(localStorage.getItem('pt_photos')||'[]');}catch{return[];} },
+  set(v) { localStorage.setItem('pt_photos',JSON.stringify(v)); }
+});
+
+function addClientPhoto(clientId, input) {
+  const files = Array.from(input.files);
+  if (!files.length) return;
+  let loaded = 0;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const photos = DB.photos;
+      photos.push({ id: uid(), clientId, data: e.target.result, date: todayStr(), note: '' });
+      DB.photos = photos;
+      loaded++;
+      if (loaded === files.length) renderClientDetail(clientId);
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function viewPhoto(clientId, photoId) {
+  const photo = DB.photos.find(p => p.id === photoId);
+  if (!photo) return;
+  document.getElementById('photo-modal-img').src = photo.data;
+  document.getElementById('photo-modal-caption').textContent = fmt(photo.date) + (photo.note ? ' — ' + photo.note : '');
+  document.getElementById('photo-modal').classList.remove('hidden');
+}
+
+async function deletePhoto(clientId, photoId) {
+  if (!await customConfirm('Eliminare questa foto?','🗑 ELIMINA FOTO','Sì, elimina','btn-danger')) return;
+  DB.photos = DB.photos.filter(p => p.id !== photoId);
+  renderClientDetail(clientId);
+}
+
+// ─── WHATSAPP ─────────────────────────────────────────────────────────────────
+function sendWhatsApp(phone, name, date, time, type) {
+  const clean = phone.replace(/[^0-9+]/g, '');
+  let msg = '';
+  if (type === 'reminder') {
+    // Generic reminder
+    const upcoming = DB.sessions.filter(s => {
+      const cl = DB.clients.find(c => c.name.startsWith(name));
+      return cl && s.clientId === cl.id && s.date >= todayStr() && !s.done;
+    }).sort((a,b) => a.date.localeCompare(b.date))[0];
+    if (upcoming) {
+      msg = `Ciao ${name}! 💪 Ti ricordo la nostra sessione di allenamento il ${fmt(upcoming.date)} alle ${upcoming.time}. A presto!`;
+    } else {
+      msg = `Ciao ${name}! 💪 Come stai? Quando vuoi fissare la prossima sessione?`;
+    }
+  } else {
+    msg = `Ciao ${name}! 💪 Ti ricordo la sessione di allenamento ${date ? 'il ' + fmt(date) : ''} ${time ? 'alle ' + time : ''}. A presto!`;
+  }
+  const url = `https://wa.me/${clean}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+}
+
+// ─── WEEK VIEW ────────────────────────────────────────────────────────────────
+let calView = 'month'; // 'month' or 'week'
+let calWeekStart = null; // Date of Monday of current week
+
+function setCalView(view) {
+  calView = view;
+  const mb = document.getElementById('view-month-btn');
+  const wb = document.getElementById('view-week-btn');
+  if (mb && wb) {
+    mb.style.background = view === 'month' ? 'var(--accent)' : 'transparent';
+    mb.style.color = view === 'month' ? '#fff' : 'var(--muted)';
+    wb.style.background = view === 'week' ? 'var(--accent)' : 'transparent';
+    wb.style.color = view === 'week' ? '#fff' : 'var(--muted)';
+  }
+  if (view === 'week' && !calWeekStart) {
+    // Start from Monday of selected date
+    const d = new Date(calSelected + 'T12:00:00');
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    calWeekStart = d;
+  }
+  renderCalendar();
+}
+
+function renderWeekView() {
+  if (!calWeekStart) {
+    const d = new Date(calSelected + 'T12:00:00');
+    const day = d.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    d.setDate(d.getDate() + diff);
+    calWeekStart = new Date(d);
+  }
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(calWeekStart);
+    d.setDate(calWeekStart.getDate() + i);
+    days.push(d);
+  }
+  const endDate = days[6];
+  const startStr = days[0].toLocaleDateString('it-IT', {day:'numeric',month:'short'});
+  const endStr = endDate.toLocaleDateString('it-IT', {day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('cal-title').textContent = startStr + ' — ' + endStr;
+  const sessions = DB.sessions;
+  const clients = DB.clients;
+  const HOURS = ['08','09','10','11','12','13','14','15','16','17','18','19','20','21'];
+  const toDateStr = d => d.toISOString().slice(0,10);
+  let html = `<div style="display:grid;grid-template-columns:48px repeat(7,1fr);gap:0;border:1px solid var(--border);border-radius:var(--radius-sm);overflow:hidden">`;
+  // Header row
+  html += `<div style="background:var(--surface2);border-bottom:1px solid var(--border)"></div>`;
+  days.forEach(d => {
+    const ds = toDateStr(d);
+    const isToday = ds === todayStr();
+    const dayName = DAYS[d.getDay()];
+    html += `<div style="background:${isToday?'rgba(255,107,0,.1)':'var(--surface2)'};border-bottom:1px solid var(--border);border-left:1px solid var(--border);padding:8px 4px;text-align:center;cursor:pointer" onclick="selectCalDay('${ds}')">
+      <div style="font-size:10px;color:var(--muted);font-weight:700">${dayName}</div>
+      <div style="font-size:${isToday?'16':'14'}px;font-weight:${isToday?'800':'600'};color:${isToday?'var(--accent)':'var(--text)'};margin-top:2px">${d.getDate()}</div>
+    </div>`;
+  });
+  // Time rows
+  HOURS.forEach(h => {
+    html += `<div style="background:var(--surface2);border-top:1px solid var(--border);padding:4px 6px;font-size:10px;color:var(--muted);text-align:right;vertical-align:top">${h}:00</div>`;
+    days.forEach(d => {
+      const ds = toDateStr(d);
+      const daySessions = sessions.filter(s => s.date === ds && s.time && s.time.startsWith(h));
+      html += `<div style="border-top:1px solid var(--border);border-left:1px solid var(--border);min-height:44px;padding:2px;position:relative;background:${toDateStr(d)===todayStr()?'rgba(255,107,0,.03)':''}">`;
+      daySessions.forEach(s => {
+        const cl = clients.find(c => c.id === s.clientId);
+        html += `<div onclick="openSessionModal('${s.id}')" style="background:${s.done?'rgba(46,204,113,.2)':'rgba(255,107,0,.2)'};border-left:2px solid ${s.done?'var(--success)':'var(--accent)'};border-radius:4px;padding:3px 5px;font-size:10px;font-weight:600;cursor:pointer;margin-bottom:2px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis">${s.time} ${cl?.name?.split(' ')[0]||'—'}</div>`;
+      });
+      html += `</div>`;
+    });
+  });
+  html += `</div>`;
+  document.getElementById('cal-grid-wrap').innerHTML = html;
+}
+
+// Patch renderCalendar to handle week view
+const _origRenderCalendar = renderCalendar;
+renderCalendar = function() {
+  if (calView === 'week') {
+    renderWeekView();
+    renderCalDaySessions();
+  } else {
+    _origRenderCalendar();
+  }
+};
+
+// Patch calPrev/calNext for week view
+const _origCalPrev = calPrev, _origCalNext = calNext;
+calPrev = function() {
+  if (calView === 'week') {
+    if (!calWeekStart) calWeekStart = new Date();
+    calWeekStart.setDate(calWeekStart.getDate() - 7);
+    renderCalendar();
+  } else _origCalPrev();
+};
+calNext = function() {
+  if (calView === 'week') {
+    if (!calWeekStart) calWeekStart = new Date();
+    calWeekStart.setDate(calWeekStart.getDate() + 7);
+    renderCalendar();
+  } else _origCalNext();
+};
+
+// ─── STATISTICS ───────────────────────────────────────────────────────────────
+function renderStats() {
+  const yearEl = document.getElementById('stats-year');
+  if (!yearEl) return;
+  // Init year selector
+  if (yearEl.options.length === 0) {
+    for (let y = 2023; y <= new Date().getFullYear()+1; y++) {
+      yearEl.innerHTML += `<option value="${y}"${y===new Date().getFullYear()?' selected':''}>${y}</option>`;
+    }
+  }
+  const year = +yearEl.value;
+  const sessions = DB.sessions;
+  const transactions = DB.transactions;
+  const clients = DB.clients;
+  const packages = DB.packages;
+
+  // KPIs
+  const yearSessions = sessions.filter(s => s.date.startsWith(year));
+  const yearIncome = transactions.filter(t => t.type==='entrata' && t.date.startsWith(year)).reduce((s,t)=>s+ +t.amount,0);
+  const activeClients = new Set(sessions.filter(s=>s.date.startsWith(year)&&s.done).map(s=>s.clientId)).size;
+  const avgPerClient = activeClients > 0 ? (yearIncome/activeClients).toFixed(0) : 0;
+
+  document.getElementById('stats-kpis').innerHTML = [
+    {icon:'💶',label:'Incassi anno',value:fmtMoney(yearIncome),color:'var(--success)'},
+    {icon:'🏋️',label:'Sessioni anno',value:yearSessions.filter(s=>s.done).length,color:'var(--accent)'},
+    {icon:'👥',label:'Clienti attivi',value:activeClients,color:'var(--info)'},
+    {icon:'📈',label:'Media/cliente',value:fmtMoney(avgPerClient),color:'var(--warning)'},
+  ].map(s=>`<div class="stat-card"><div class="stat-icon">${s.icon}</div><div class="stat-value" style="color:${s.color}">${s.value}</div><div class="stat-label">${s.label}</div></div>`).join('');
+
+  // Monthly income chart
+  const monthlyIncome = Array(12).fill(0);
+  const monthlySessions = Array(12).fill(0);
+  transactions.filter(t=>t.type==='entrata'&&t.date.startsWith(year)).forEach(t=>{
+    const m = parseInt(t.date.split('-')[1])-1;
+    monthlyIncome[m] += +t.amount;
+  });
+  sessions.filter(s=>s.done&&s.date.startsWith(year)).forEach(s=>{
+    const m = parseInt(s.date.split('-')[1])-1;
+    monthlySessions[m]++;
+  });
+
+  const renderBarChart = (containerId, data, color, suffix='') => {
+    const max = Math.max(...data, 1);
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    const shortMonths = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+    container.innerHTML = data.map((v,i) => {
+      const h = Math.max(4, Math.round((v/max)*150));
+      const isCurrentMonth = i === new Date().getMonth() && year === new Date().getFullYear();
+      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
+        <div style="font-size:9px;color:var(--muted);font-weight:600">${v>0?(suffix==='€'?'€'+Math.round(v):v):''}</div>
+        <div style="width:100%;height:${h}px;background:${isCurrentMonth?'var(--accent)':color};border-radius:4px 4px 0 0;min-height:4px;transition:height .3s"></div>
+        <div style="font-size:9px;color:var(--muted)">${shortMonths[i]}</div>
+      </div>`;
+    }).join('');
+  };
+
+  renderBarChart('chart-income', monthlyIncome, 'rgba(46,204,113,.5)', '€');
+  renderBarChart('chart-sessions', monthlySessions, 'rgba(255,107,0,.5)');
+
+  // Top clients
+  const clientSessions = {};
+  sessions.filter(s=>s.done&&s.date.startsWith(year)).forEach(s=>{
+    clientSessions[s.clientId] = (clientSessions[s.clientId]||0)+1;
+  });
+  const topClients = Object.entries(clientSessions).sort((a,b)=>b[1]-a[1]).slice(0,5);
+  const maxSess = topClients[0]?.[1]||1;
+  document.getElementById('stats-top-clients').innerHTML = topClients.length === 0
+    ? '<div class="empty-state" style="padding:20px">Nessun dato</div>'
+    : topClients.map(([cid,count])=>{
+        const cl=clients.find(c=>c.id===cid);
+        const pct=Math.round((count/maxSess)*100);
+        return `<div style="margin-bottom:12px">
+          <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px">
+            <span style="font-weight:600">${cl?.name||'—'}</span>
+            <span style="color:var(--accent);font-weight:700">${count} sedute</span>
+          </div>
+          <div style="height:6px;background:var(--border);border-radius:3px">
+            <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:3px;transition:width .4s"></div>
+          </div>
+        </div>`;
+      }).join('');
+
+  // Packages stats
+  const activePkg = packages.filter(p=>p.status==='attivo');
+  const totalCredit = activePkg.reduce((s,p)=>{
+    const paid=DB.payments.filter(py=>py.packageId===p.id).reduce((s2,py)=>s2+ +py.amount,0);
+    return s+Math.max(0,(+p.price||0)-paid);
+  },0);
+  document.getElementById('stats-packages').innerHTML = `
+    <div class="row-item"><span class="text-muted" style="font-size:13px">📦 Pacchetti attivi</span><span style="font-weight:700;color:var(--accent)">${activePkg.length}</span></div>
+    <div class="row-item"><span class="text-muted" style="font-size:13px">⏳ Crediti da incassare</span><span style="font-weight:700;color:var(--warning)">${fmtMoney(totalCredit)}</span></div>
+    <div class="row-item"><span class="text-muted" style="font-size:13px">✅ Pacchetti saldati</span><span style="font-weight:700;color:var(--success)">${packages.filter(p=>{const paid=DB.payments.filter(py=>py.packageId===p.id).reduce((s,py)=>s+ +py.amount,0);return paid>=(+p.price||0)&&p.price>0;}).length}</span></div>
+    <div class="row-item"><span class="text-muted" style="font-size:13px">👥 Clienti totali</span><span style="font-weight:700">${clients.length}</span></div>
+  `;
+
+  // Day of week activity
+  const dayCounts = Array(7).fill(0);
+  sessions.filter(s=>s.done&&s.date.startsWith(year)).forEach(s=>{
+    const d = new Date(s.date+'T12:00:00').getDay();
+    dayCounts[d]++;
+  });
+  const maxDay = Math.max(...dayCounts,1);
+  const dayNames = ['Dom','Lun','Mar','Mer','Gio','Ven','Sab'];
+  document.getElementById('stats-days').innerHTML = dayCounts.map((c,i)=>{
+    const pct = Math.round((c/maxDay)*100);
+    return `<div style="text-align:center">
+      <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:6px">${c||''}</div>
+      <div style="height:60px;background:var(--border);border-radius:6px;position:relative;overflow:hidden">
+        <div style="position:absolute;bottom:0;left:0;right:0;height:${pct}%;background:${pct>75?'var(--accent)':'rgba(255,107,0,.4)'};transition:height .4s"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">${dayNames[i]}</div>
+    </div>`;
+  }).join('');
+}
+
+// ─── GLOBAL SEARCH ────────────────────────────────────────────────────────────
+function toggleGlobalSearch() {
+  const overlay = document.getElementById('global-search-overlay');
+  overlay.classList.toggle('hidden');
+  if (!overlay.classList.contains('hidden')) {
+    setTimeout(() => document.getElementById('global-search-input').focus(), 100);
+    document.getElementById('global-search-results').innerHTML = '';
+    document.getElementById('global-search-input').value = '';
+  }
+}
+
+function globalSearch(query) {
+  const q = query.toLowerCase().trim();
+  const results = document.getElementById('global-search-results');
+  if (!q || q.length < 2) { results.innerHTML = ''; return; }
+  const found = [];
+  // Clients
+  DB.clients.filter(c =>
+    c.name.toLowerCase().includes(q) ||
+    (c.phone||'').includes(q) ||
+    (c.email||'').toLowerCase().includes(q) ||
+    (c.cf||'').toLowerCase().includes(q)
+  ).forEach(c => found.push({type:'client', icon:'👤', title:c.name, sub:c.phone||c.email||'', action:`showClientDetail('${c.id}');document.getElementById('global-search-overlay').classList.add('hidden');navigate('clients');`}));
+  // Sessions
+  DB.sessions.filter(s => {
+    const cl = DB.clients.find(c=>c.id===s.clientId);
+    return (cl?.name||'').toLowerCase().includes(q) || (s.note||'').toLowerCase().includes(q);
+  }).slice(0,5).forEach(s => {
+    const cl = DB.clients.find(c=>c.id===s.clientId);
+    found.push({type:'session', icon:'🏋️', title:(cl?.name||'—')+' — '+fmt(s.date)+' '+s.time, sub:s.note||'', action:`calSelected='${s.date}';document.getElementById('global-search-overlay').classList.add('hidden');navigate('calendar');`});
+  });
+  // Packages
+  DB.packages.filter(p =>
+    p.name.toLowerCase().includes(q) ||
+    (DB.clients.find(c=>c.id===p.clientId)?.name||'').toLowerCase().includes(q)
+  ).slice(0,3).forEach(p => {
+    const cl = DB.clients.find(c=>c.id===p.clientId);
+    found.push({type:'package', icon:'📦', title:p.name, sub:(cl?.name||'')+'  ·  '+fmtMoney(p.price), action:`document.getElementById('global-search-overlay').classList.add('hidden');navigate('packages');`});
+  });
+
+  if (found.length === 0) {
+    results.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px;font-size:14px">Nessun risultato per "'+query+'"</div>';
+    return;
+  }
+  results.innerHTML = found.map(r => `
+    <div onclick="${r.action}" style="background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:border-color .15s" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <span style="font-size:22px">${r.icon}</span>
+      <div>
+        <div style="font-weight:600;font-size:14px">${r.title}</div>
+        ${r.sub?`<div style="color:var(--muted);font-size:12px;margin-top:2px">${r.sub}</div>`:''}
+      </div>
+    </div>`).join('');
+}
+
+// Keyboard shortcut for search
+document.addEventListener('keydown', function(e) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault();
+    toggleGlobalSearch();
+  }
+});
+
+// ─── PDF / PRINT HELPERS ──────────────────────────────────────────────────────
+function openPrintWindow(html, filename) {
+  // Always use overlay on mobile (iOS blocks popups from PWA)
+  showPDFOverlay(html, filename);
+}
+
+function closePDFOverlay() {
+  var o = document.getElementById('pdf-overlay');
+  if (o) { o.style.opacity='0'; o.style.transition='opacity .2s'; setTimeout(function(){if(o)o.remove();},200); }
+  try{ if(window._pdfWin && !window._pdfWin.closed) window._pdfWin.close(); }catch(e){}
+}
+
+function showPDFOverlay(html, filename) {
+  // Remove any existing overlay first
+  var existing = document.getElementById('pdf-overlay');
+  if (existing) existing.remove();
+  let overlay = document.getElementById('pdf-overlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'pdf-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;z-index:9998;background:#fff;display:flex;flex-direction:column';
+    var pdfTitleEl = document.createElement('span');
+    pdfTitleEl.textContent = '\uD83D\uDCC4 ' + filename;
+    pdfTitleEl.style.cssText = 'color:#fff;font-weight:700;font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap';
+    var pdfBtnPrint = document.createElement('button');
+    pdfBtnPrint.textContent = '\uD83D\uDDBD Stampa/Salva PDF';
+    pdfBtnPrint.style.cssText = 'background:#fff;color:#ff6b00;border:none;border-radius:50px;padding:8px 14px;font-weight:700;cursor:pointer;font-size:12px;white-space:nowrap;flex-shrink:0';
+    pdfBtnPrint.onclick = function(){ var f=document.getElementById('pdf-frame'); if(f&&f.contentWindow) f.contentWindow.print(); };
+    var pdfBtnClose = document.createElement('button');
+    pdfBtnClose.textContent = '\u2715';
+    pdfBtnClose.style.cssText = 'background:rgba(255,255,255,.25);color:#fff;border:none;border-radius:50%;width:34px;height:34px;font-size:17px;cursor:pointer;flex-shrink:0';
+    pdfBtnClose.onclick = function(e){ e.preventDefault(); e.stopPropagation(); var o=document.getElementById('pdf-overlay'); if(o){ o.style.display='none'; o.remove(); } };
+    var pdfHeader = document.createElement('div');
+    pdfHeader.style.cssText = 'background:#ff6b00;padding:10px 14px;display:flex;align-items:center;gap:8px;flex-shrink:0';
+    pdfHeader.appendChild(pdfTitleEl);
+    pdfHeader.appendChild(pdfBtnPrint);
+    pdfHeader.appendChild(pdfBtnClose);
+    var pdfFrame = document.createElement('iframe');
+    pdfFrame.id = 'pdf-frame';
+    pdfFrame.style.cssText = 'flex:1;border:none;width:100%;height:100%';
+    overlay.appendChild(pdfHeader);
+    overlay.appendChild(pdfFrame)
+    document.body.appendChild(overlay);
+  }
+  const frame = document.getElementById('pdf-frame');
+  frame.srcdoc = html;
+  document.getElementById('pdf-overlay').style.display = 'flex';
+}
+
+
+// ─── LEADS ────────────────────────────────────────────────────────────────────
+var leadFilter='tutti', editingLead=null;
+var LS_C={da_contattare:'var(--warning)',contattato:'var(--success)',ricontattare:'var(--info)',gestito:'var(--accent)'};
+var LS_B={da_contattare:'rgba(243,156,18,.12)',contattato:'rgba(46,204,113,.12)',ricontattare:'rgba(52,152,219,.12)',gestito:'rgba(255,107,0,.12)'};
+var LS_L={da_contattare:'📞 Da contattare',contattato:'✅ Contattato',ricontattare:'🔄 Da ricontattare',gestito:'🏆 Gestito'};
+
+function setLeadFilter(f){
+  leadFilter=f;
+  ['tutti','da_contattare','contattato','ricontattare','gestito'].forEach(function(x){var b=document.getElementById('lf-'+x);if(b)b.className='chip'+(x===f?' active':'');});
+  renderLeads();
+}
+
+function renderLeads(){
+  var all=DB.leads;
+  var list=leadFilter==='tutti'?all.slice():all.filter(function(l){return l.status===leadFilter;});
+  list.sort(function(a,b){var o={ricontattare:0,da_contattare:1,contattato:2,gestito:3};return(o[a.status]||2)-(o[b.status]||2);});
+  var se=document.getElementById('leads-stats');
+  if(se) se.innerHTML=[
+    {icon:'📋',label:'Totali',value:all.length,color:'var(--accent)'},
+    {icon:'📞',label:'Da contattare',value:all.filter(function(l){return l.status==='da_contattare';}).length,color:'var(--warning)'},
+    {icon:'🔄',label:'Ricontattare',value:all.filter(function(l){return l.status==='ricontattare';}).length,color:'var(--info)'},
+    {icon:'🏆',label:'Gestiti',value:all.filter(function(l){return l.status==='gestito';}).length,color:'var(--success)'},
+  ].map(function(s){return'<div class="stat-card"><div class="stat-icon">'+s.icon+'</div><div class="stat-value" style="color:'+s.color+'">'+s.value+'</div><div class="stat-label">'+s.label+'</div></div>';}).join('');
+  var el=document.getElementById('leads-list');
+  if(!el)return;
+  el.innerHTML='';
+  if(!list.length){el.innerHTML='<div class="card"><div class="empty-state">Nessun lead</div></div>';return;}
+  var today=todayStr();
+  list.forEach(function(l){
+    var ov=l.status==='ricontattare'&&l.callbackDate&&l.callbackDate<today;
+    var card=document.createElement('div');card.className='card';
+    if(ov)card.style.borderLeft='3px solid var(--danger)';
+    card.onclick=function(){openLeadModal(l.id);};
+    var top=document.createElement('div');top.className='flex-between';top.style.marginBottom='8px';
+    var info=document.createElement('div');
+    var nd=document.createElement('div');nd.style.cssText='font-weight:700;font-size:16px';nd.textContent=l.name;info.appendChild(nd);
+    if(l.phone){var tel=document.createElement('a');tel.href='tel:'+l.phone;tel.style.cssText='color:var(--accent);font-size:13px;text-decoration:none;display:inline-flex;align-items:center;gap:4px;margin-top:3px';tel.onclick=function(e){e.stopPropagation();};tel.innerHTML='📞 '+l.phone+' <span style="font-size:10px;background:var(--accent-glow);padding:2px 8px;border-radius:50px">CHIAMA</span>';info.appendChild(tel);}
+    var badge=document.createElement('span');badge.className='tag';badge.style.cssText='background:'+LS_B[l.status]+';color:'+LS_C[l.status];badge.textContent=LS_L[l.status];
+    top.appendChild(info);top.appendChild(badge);card.appendChild(top);
+    if(l.contactedDate){var d=document.createElement('div');d.className='text-muted';d.style.fontSize='12px';d.textContent='📅 Contattato: '+fmt(l.contactedDate);card.appendChild(d);}
+    if(l.callbackDate){var d=document.createElement('div');d.style.cssText='font-size:12px;color:'+(ov?'var(--danger)':'var(--muted)');d.textContent='🔄 Ricontattare: '+fmt(l.callbackDate)+(ov?' ⚠️ SCADUTO':'');card.appendChild(d);}
+    if(l.notes){var d=document.createElement('div');d.style.cssText='font-size:12px;color:var(--muted);font-style:italic;margin-top:6px;padding:8px;background:var(--surface2);border-radius:8px';d.textContent='"'+l.notes+'"';card.appendChild(d);}
+    var row=document.createElement('div');row.style.cssText='display:flex;gap:8px;margin-top:10px';
+    if(l.phone){var bw=document.createElement('button');bw.textContent='💬 WhatsApp';bw.style.cssText='flex:1;background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(p,n){bw.onclick=function(e){e.stopPropagation();window.open('https://wa.me/'+p.replace(/[^0-9+]/g,'')+'?text='+encodeURIComponent('Ciao '+n+'! Sono il tuo PT di Fitactive 💪'),'_blank');};})(l.phone,l.name.split(' ')[0]);row.appendChild(bw);}
+    var bg=document.createElement('button');var isG=l.status==='gestito';bg.textContent=isG?'🏆 Gestito':'✅ Segna gestito';bg.style.cssText='flex:1;background:'+(isG?'rgba(255,107,0,.15)':'rgba(46,204,113,.1)')+';border:1.5px solid '+(isG?'var(--accent)':'var(--success)')+';color:'+(isG?'var(--accent)':'var(--success)')+';border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(id){bg.onclick=function(e){e.stopPropagation();quickStatusLead(id,'gestito');};})(l.id);row.appendChild(bg);
+    card.appendChild(row);el.appendChild(card);
+  });
+}
+
+function openLeadModal(id){
+  editingLead=id||null;
+  document.getElementById('lead-modal-title').textContent=id?'MODIFICA LEAD':'NUOVO LEAD';
+  document.getElementById('lead-delete-btn').style.display=id?'block':'none';
+  if(id){var l=DB.leads.find(function(x){return x.id===id;});if(!l)return;document.getElementById('lead-name').value=l.name||'';document.getElementById('lead-phone').value=l.phone||'';document.getElementById('lead-status').value=l.status||'da_contattare';document.getElementById('lead-contacted-date').value=l.contactedDate||'';document.getElementById('lead-callback-date').value=l.callbackDate||'';document.getElementById('lead-notes').value=l.notes||'';}
+  else{['lead-name','lead-phone','lead-contacted-date','lead-callback-date','lead-notes'].forEach(function(i){document.getElementById(i).value='';});document.getElementById('lead-status').value='da_contattare';}
+  document.getElementById('lead-modal').classList.remove('hidden');
+}
+
+function closeLeadModal(){document.getElementById('lead-modal').classList.add('hidden');editingLead=null;}
+
+function saveLead(){
+  var name=document.getElementById('lead-name').value.trim();
+  if(!name)return alert('Inserisci il nome');
+  var status=document.getElementById('lead-status').value;
+  var cDate=document.getElementById('lead-contacted-date').value;
+  if(status==='contattato'&&!cDate)cDate=todayStr();
+  var l={id:editingLead||uid(),name:name,phone:document.getElementById('lead-phone').value.trim(),status:status,contactedDate:cDate,callbackDate:document.getElementById('lead-callback-date').value,notes:document.getElementById('lead-notes').value,createdAt:editingLead?(DB.leads.find(function(x){return x.id===editingLead;})||{}).createdAt:todayStr()};
+  var leads=DB.leads,idx=leads.findIndex(function(x){return x.id===l.id;});
+  if(idx>=0)leads[idx]=l;else leads.push(l);
+  DB.leads=leads;closeLeadModal();renderLeads();
+}
+
+async function deleteCurrentLead(){
+  if(!await customConfirm('Eliminare questo lead?','🗑 ELIMINA LEAD'))return;
+  DB.leads=DB.leads.filter(function(l){return l.id!==editingLead;});
+  closeLeadModal();renderLeads();
+}
+
+function quickStatusLead(id,status){
+  var leads=DB.leads,idx=leads.findIndex(function(l){return l.id===id;});
+  if(idx<0)return;
+  leads[idx].status=status;
+  if(status==='contattato'&&!leads[idx].contactedDate)leads[idx].contactedDate=todayStr();
+  DB.leads=leads;renderLeads();
+}
+
+function checkLeadNotifs(){
+  if(!('Notification' in window)||Notification.permission!=='granted')return;
+  DB.leads.filter(function(l){return l.status==='ricontattare'&&l.callbackDate&&l.callbackDate<=todayStr();}).forEach(function(l){
+    var dt=new Date(l.callbackDate+'T09:00:00'),now=new Date();
+    if(dt>now)setTimeout(function(){new Notification('🎯 Ricontattare: '+l.name,{icon:'/icon-192.png',tag:'lead-'+l.id});},dt.getTime()-now.getTime());
+  });
+}
+
+renderDashboard();
+checkLeadNotifs();
+initNotifications();
+updateMobileUI("dashboard");
+</script>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",function(){navigator.serviceWorker.register("sw.js").catch(function(){});});}
+</script>
+<!-- CUSTOM CONFIRM MODAL -->
+<div id="confirm-modal" class="overlay hidden" style="z-index:9999">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <span id="confirm-title">CONFERMA</span>
+      <button class="modal-close" onclick="_confirmResolve(false)">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="confirm-message" style="font-size:15px;line-height:1.6;margin-bottom:24px;color:var(--text)"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button class="btn btn-secondary" onclick="_confirmResolve(false)">Annulla</button>
+        <button id="confirm-ok-btn" class="btn btn-danger" onclick="_confirmResolve(true)">Conferma</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTO VIEWER MODAL -->
+<div id="photo-modal" class="overlay hidden" onclick="this.classList.add('hidden')">
+  <div style="max-width:90vw;max-height:90vh;position:relative" onclick="event.stopPropagation()">
+    <img id="photo-modal-img" src="" style="max-width:90vw;max-height:80vh;border-radius:var(--radius);object-fit:contain">
+    <div id="photo-modal-caption" style="text-align:center;color:var(--muted);font-size:13px;margin-top:10px"></div>
+    <button onclick="document.getElementById('photo-modal').classList.add('hidden')" style="position:absolute;top:-16px;right:-16px;background:var(--danger);border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer">✕</button>
+  </div>
+</div>
+
+<!-- GLOBAL SEARCH -->
+<div id="global-search-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;padding:20px;backdrop-filter:blur(4px)" onclick="this.classList.add('hidden')">
+  <div style="max-width:600px;margin:0 auto" onclick="event.stopPropagation()">
+    <div style="position:relative;margin-bottom:16px">
+      <input id="global-search-input" type="text" placeholder="Cerca clienti, sessioni, pacchetti..." oninput="globalSearch(this.value)"
+        style="border-radius:50px;padding:14px 20px;font-size:16px;border-color:var(--accent);background:var(--surface)">
+      <button onclick="document.getElementById('global-search-overlay').classList.add('hidden')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
+    </div>
+    <div id="global-search-results" style="display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto"></div>
+  </div>
+</div>
+
+
+<!-- LEAD MODAL -->
+<div id="lead-modal" class="overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <span id="lead-modal-title">NUOVO LEAD</span>
+      <button class="modal-close" onclick="closeLeadModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="grid2">
+        <div class="field"><label>Nome *</label><input id="lead-name" placeholder="Mario Rossi"></div>
+        <div class="field"><label>Telefono</label><input id="lead-phone" type="tel" placeholder="+39 333..."></div>
+      </div>
+      <div class="field"><label>Stato</label>
+        <select id="lead-status">
+          <option value="da_contattare">📞 Da contattare</option>
+          <option value="contattato">✅ Contattato</option>
+          <option value="ricontattare">🔄 Da ricontattare</option>
+          <option value="gestito">🏆 Gestito</option>
+        </select>
+      </div>
+      <div class="grid2">
+        <div class="field"><label>Data contatto</label><input type="date" id="lead-contacted-date"></div>
+        <div class="field"><label>Data ricontatto</label><input type="date" id="lead-callback-date"></div>
+      </div>
+      <div class="field"><label>Note</label><textarea id="lead-notes" rows="3" placeholder="Interessi, obiettivi, osservazioni..."></textarea></div>
+      <div style="display:flex;gap:10px;justify-content:space-between">
+        <button class="btn btn-danger btn-sm" id="lead-delete-btn" onclick="deleteCurrentLead()" style="display:none">🗑 Elimina</button>
+        <div style="display:flex;gap:10px;margin-left:auto">
+          <button class="btn btn-secondary" onclick="closeLeadModal()">Annulla</button>
+          <button class="btn btn-primary" onclick="saveLead()">💾 Salva</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
+
