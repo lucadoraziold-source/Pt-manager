@@ -2378,6 +2378,14 @@ function renderLeads(){
     top.appendChild(info);top.appendChild(badge);card.appendChild(top);
     if(l.contactedDate){var d=document.createElement('div');d.className='text-muted';d.style.fontSize='12px';d.textContent='📅 Contattato: '+fmt(l.contactedDate);card.appendChild(d);}
     if(l.callbackDate){var d=document.createElement('div');d.style.cssText='font-size:12px;color:'+(ov?'var(--danger)':'var(--muted)');d.textContent='🔄 Ricontattare: '+fmt(l.callbackDate)+(ov?' ⚠️ SCADUTO':'');card.appendChild(d);}
+    if(l.freeLesson){
+      var fl=document.createElement('div');
+      var flColor=l.freeLesson==='si'?'var(--success)':l.freeLesson==='no'?'var(--danger)':'var(--warning)';
+      var flLabel=l.freeLesson==='si'?'✅ Lezione free eseguita':l.freeLesson==='no'?'❌ Lezione free non eseguita':'📅 Lezione free programmata';
+      fl.style.cssText='font-size:12px;font-weight:600;margin-top:6px;padding:6px 10px;border-radius:50px;display:inline-block;background:'+flColor.replace(')',', .12)').replace('var(','rgba(').replace('--success','46,204,113').replace('--danger','255,59,59').replace('--warning','243,156,18')+';color:'+flColor;
+      fl.textContent=flLabel+(l.freeLessonDate?' — '+fmt(l.freeLessonDate):'');
+      card.appendChild(fl);
+    }
     if(l.notes){var d=document.createElement('div');d.style.cssText='font-size:12px;color:var(--muted);font-style:italic;margin-top:6px;padding:8px;background:var(--surface2);border-radius:8px';d.textContent='"'+l.notes+'"';card.appendChild(d);}
     var row=document.createElement('div');row.style.cssText='display:flex;gap:8px;margin-top:10px';
     if(l.phone){var bw=document.createElement('button');bw.textContent='💬 WhatsApp';bw.style.cssText='flex:1;background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(p,n){bw.onclick=function(e){e.stopPropagation();window.open('https://wa.me/'+p.replace(/[^0-9+]/g,'')+'?text='+encodeURIComponent('Ciao '+n+'! Sono il tuo PT di Fitactive 💪'),'_blank');};})(l.phone,l.name.split(' ')[0]);row.appendChild(bw);}
@@ -2403,7 +2411,7 @@ function saveLead(){
   var status=document.getElementById('lead-status').value;
   var cDate=document.getElementById('lead-contacted-date').value;
   if(status==='contattato'&&!cDate)cDate=todayStr();
-  var l={id:editingLead||uid(),name:name,phone:document.getElementById('lead-phone').value.trim(),status:status,contactedDate:cDate,callbackDate:document.getElementById('lead-callback-date').value,notes:document.getElementById('lead-notes').value,createdAt:editingLead?(DB.leads.find(function(x){return x.id===editingLead;})||{}).createdAt:todayStr()};
+  var l={id:editingLead||uid(),name:name,phone:document.getElementById('lead-phone').value.trim(),status:status,contactedDate:cDate,callbackDate:document.getElementById('lead-callback-date').value,freeLesson:document.getElementById('lead-free-lesson').value,freeLessonDate:document.getElementById('lead-free-date').value,notes:document.getElementById('lead-notes').value,createdAt:editingLead?(DB.leads.find(function(x){return x.id===editingLead;})||{}).createdAt:todayStr()};
   var leads=DB.leads,idx=leads.findIndex(function(x){return x.id===l.id;});
   if(idx>=0)leads[idx]=l;else leads.push(l);
   DB.leads=leads;closeLeadModal();renderLeads();
@@ -2501,6 +2509,24 @@ if("serviceWorker" in navigator){window.addEventListener("load",function(){navig
       <div class="grid2">
         <div class="field"><label>Data contatto</label><input type="date" id="lead-contacted-date"></div>
         <div class="field"><label>Data ricontatto</label><input type="date" id="lead-callback-date"></div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px">
+        <div style="font-size:11px;color:var(--accent);font-weight:700;letter-spacing:2px;margin-bottom:12px">LEZIONE FREE</div>
+        <div class="grid2">
+          <div class="field" style="margin-bottom:0">
+            <label>Lezione free</label>
+            <select id="lead-free-lesson">
+              <option value="">— Non impostata —</option>
+              <option value="si">✅ Sì, eseguita</option>
+              <option value="no">❌ No, non eseguita</option>
+              <option value="programmata">📅 Programmata</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label>Data lezione free</label>
+            <input type="date" id="lead-free-date">
+          </div>
+        </div>
       </div>
       <div class="field"><label>Note</label><textarea id="lead-notes" rows="3" placeholder="Interessi, obiettivi, osservazioni..."></textarea></div>
       <div style="display:flex;gap:10px;justify-content:space-between">
