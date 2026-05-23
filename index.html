@@ -2383,8 +2383,19 @@ function renderLeads(){
     var row=document.createElement('div');row.style.cssText='display:flex;gap:6px;margin-top:10px;flex-wrap:wrap';
     if(l.phone){var bw=document.createElement('button');bw.textContent='💬 WA';bw.style.cssText='flex:1;background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(p,n){bw.onclick=function(e){e.stopPropagation();window.open('https://wa.me/'+p.replace(/[^0-9+]/g,'')+'?text='+encodeURIComponent('Ciao '+n+'! Sono il tuo PT di Fitactive 💪'),'_blank');};})(l.phone,l.name.split(' ')[0]);row.appendChild(bw);}
     var isG=l.status==='gestito';
-    if(!isG){var bg=document.createElement('button');bg.textContent='✅ Gestito';bg.style.cssText='flex:1;background:rgba(46,204,113,.1);border:1.5px solid var(--success);color:var(--success);border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(id){bg.onclick=function(e){e.stopPropagation();quickStatusLead(id,'gestito');};})(l.id);row.appendChild(bg);}
-    else{var bg=document.createElement('button');bg.textContent='🏆 Gestito';bg.style.cssText='flex:1;background:rgba(255,107,0,.15);border:1.5px solid var(--accent);color:var(--accent);border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';bg.onclick=function(e){e.stopPropagation();};row.appendChild(bg);var bng=document.createElement('button');bng.textContent='↩️ Riapri';bng.style.cssText='flex:1;background:rgba(255,59,59,.1);border:1.5px solid var(--danger);color:var(--danger);border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(id){bng.onclick=function(e){e.stopPropagation();quickStatusLead(id,'da_contattare');};})(l.id);row.appendChild(bng);}
+    // Pulsante GESTITO
+    var bg=document.createElement('button');
+    bg.textContent=isG?'🏆 Gestito':'✅ Gestito';
+    bg.style.cssText='flex:1;background:'+(isG?'rgba(255,107,0,.15)':'rgba(46,204,113,.1)')+';border:1.5px solid '+(isG?'var(--accent)':'var(--success)')+';color:'+(isG?'var(--accent)':'var(--success)')+';border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';
+    if(!isG){(function(id){bg.onclick=function(e){e.stopPropagation();quickStatusLead(id,'gestito');};})(l.id);}
+    else{bg.onclick=function(e){e.stopPropagation();};}
+    row.appendChild(bg);
+    // Pulsante NON GESTITO — sempre visibile
+    var bng=document.createElement('button');
+    bng.textContent='❌ Non gestito';
+    bng.style.cssText='flex:1;background:rgba(255,59,59,.1);border:1.5px solid var(--danger);color:var(--danger);border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';
+    (function(id){bng.onclick=function(e){e.stopPropagation();quickStatusLead(id,'da_contattare');};})(l.id);
+    row.appendChild(bng);
     card.appendChild(row);el.appendChild(card);
   });
 }
