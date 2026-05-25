@@ -585,6 +585,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
       <button class="chip" onclick="setLeadFilter('contattato')" id="lf-contattato" style="margin-right:6px">✅ Contattati</button>
       <button class="chip" onclick="setLeadFilter('ricontattare')" id="lf-ricontattare" style="margin-right:6px">🔄 Ricontattare</button>
       <button class="chip" onclick="setLeadFilter('gestito')" id="lf-gestito">🏆 Gestiti</button>
+      <button class="chip" onclick="setLeadFilter('non_gestito')" id="lf-non_gestito" style="margin-left:6px">❌ Non gestiti</button>
     </div>
     <div id="leads-list" style="display:flex;flex-direction:column;gap:10px"></div>
   </div>
@@ -2339,36 +2340,62 @@ function showPDFOverlay(html, filename) {
 
 // ─── LEADS ────────────────────────────────────────────────────────────────────
 var leadFilter='tutti', editingLead=null;
-var LS_C={da_contattare:'var(--warning)',contattato:'var(--success)',ricontattare:'var(--info)',gestito:'var(--accent)'};
-var LS_B={da_contattare:'rgba(243,156,18,.12)',contattato:'rgba(46,204,113,.12)',ricontattare:'rgba(52,152,219,.12)',gestito:'rgba(255,107,0,.12)'};
-var LS_L={da_contattare:'📞 Da contattare',contattato:'✅ Contattato',ricontattare:'🔄 Da ricontattare',gestito:'🏆 Gestito'};
+var LS_C={da_contattare:'var(--warning)',contattato:'var(--success)',ricontattare:'var(--info)',gestito:'var(--accent)',non_gestito:'var(--danger)'};
+var LS_B={da_contattare:'rgba(243,156,18,.12)',contattato:'rgba(46,204,113,.12)',ricontattare:'rgba(52,152,219,.12)',gestito:'rgba(255,107,0,.12)',non_gestito:'rgba(255,59,59,.12)'};
+var LS_L={da_contattare:'📞 Da contattare',contattato:'✅ Contattato',ricontattare:'🔄 Da ricontattare',gestito:'🏆 Gestito',non_gestito:'❌ Non gestito'};
 
 function setLeadFilter(f){
   leadFilter=f;
-  ['tutti','da_contattare','contattato','ricontattare','gestito'].forEach(function(x){var b=document.getElementById('lf-'+x);if(b)b.className='chip'+(x===f?' active':'');});
+  ['tutti','da_contattare','contattato','ricontattare','gestito','non_gestito'].forEach(function(x){var b=document.getElementById('lf-'+x);if(b)b.className='chip'+(x===f?' active':'');});
   renderLeads();
 }
 
 function renderLeads(){
   var all=DB.leads;
   var list=leadFilter==='tutti'?all.slice():all.filter(function(l){return l.status===leadFilter;});
-  list.sort(function(a,b){var o={ricontattare:0,da_contattare:1,contattato:2,gestito:3};return(o[a.status]||2)-(o[b.status]||2);});
+  list.sort(function(a,b){var o={ricontattare:0,da_contattare:1,contattato:2,gestito:3,non_gestito:4};return(o[a.status]||2)-(o[b.status]||2);});
   var se=document.getElementById('leads-stats');
   if(se) se.innerHTML=[
     {icon:'📋',label:'Totali',value:all.length,color:'var(--accent)'},
     {icon:'📞',label:'Da contattare',value:all.filter(function(l){return l.status==='da_contattare';}).length,color:'var(--warning)'},
     {icon:'🔄',label:'Ricontattare',value:all.filter(function(l){return l.status==='ricontattare';}).length,color:'var(--info)'},
     {icon:'🏆',label:'Gestiti',value:all.filter(function(l){return l.status==='gestito';}).length,color:'var(--success)'},
+    {icon:'❌',label:'Non gestiti',value:all.filter(function(l){return l.status==='non_gestito';}).length,color:'var(--danger)'},
   ].map(function(s){return'<div class="stat-card"><div class="stat-icon">'+s.icon+'</div><div class="stat-value" style="color:'+s.color+'">'+s.value+'</div><div class="stat-label">'+s.label+'</div></div>';}).join('');
   var el=document.getElementById('leads-list');
   if(!el)return;
   el.innerHTML='';
   if(!list.length){el.innerHTML='<div class="card"><div class="empty-state">Nessun lead</div></div>';return;}
   var today=todayStr();
+
+  // Group by month of creation
+  var MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var groups={};
+  var groupOrder=[];
   list.forEach(function(l){
+    var d=l.createdAt||today;
+    var dt=new Date(d+'T12:00:00');
+    var key=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    var label=MESI[dt.getMonth()]+' '+dt.getFullYear();
+    if(!groups[key]){groups[key]={label:label,items:[]};groupOrder.push(key);}
+    groups[key].items.push(l);
+  });
+  groupOrder.sort(function(a,b){return b.localeCompare(a);}); // most recent first
+
+  groupOrder.forEach(function(key){
+    var group=groups[key];
+    // Month header
+    var header=document.createElement('div');
+    header.style.cssText='font-family:"Bebas Neue",sans-serif;font-size:14px;letter-spacing:3px;color:var(--muted);margin:14px 0 8px;padding-left:4px';
+    header.textContent=group.label.toUpperCase()+' ('+group.items.length+')';
+    el.appendChild(header);
+
+    group.items.forEach(function(l){
     var ov=l.status==='ricontattare'&&l.callbackDate&&l.callbackDate<today;
+    var isNG=l.status==='non_gestito';
     var card=document.createElement('div');card.className='card';
-    if(ov)card.style.borderLeft='3px solid var(--danger)';
+    if(ov||isNG)card.style.borderLeft='3px solid var(--danger)';
+    if(isNG)card.style.opacity='0.85';
     card.onclick=function(){openLeadModal(l.id);};
     var top=document.createElement('div');top.className='flex-between';top.style.marginBottom='8px';
     var info=document.createElement('div');
@@ -2394,10 +2421,11 @@ function renderLeads(){
     var bng=document.createElement('button');
     bng.textContent='❌ Non gestito';
     bng.style.cssText='flex:1;background:rgba(255,59,59,.1);border:1.5px solid var(--danger);color:var(--danger);border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';
-    (function(id){bng.onclick=function(e){e.stopPropagation();quickStatusLead(id,'da_contattare');};})(l.id);
+    (function(id){bng.onclick=function(e){e.stopPropagation();quickStatusLead(id,'non_gestito');};})(l.id);
     row.appendChild(bng);
     card.appendChild(row);el.appendChild(card);
-  });
+    }); // end group.items.forEach
+  }); // end groupOrder.forEach
 }
 
 function openLeadModal(id){
