@@ -328,7 +328,8 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
       <div class="flex-between mb24" style="margin-top:4px">
         <div class="page-title" style="margin-bottom:0">CLIENTI</div>
         <div class="flex-gap">
-          <input id="client-search" placeholder="🔍 Cerca..." style="max-width:220px;border-radius:50px" oninput="renderClients()">
+          <input id="client-search" placeholder="🔍 Cerca..." style="max-width:160px;border-radius:50px" oninput="renderClients()">
+          <button class="btn btn-secondary btn-sm" onclick="exportClientsExcel()" style="border-color:var(--success);color:var(--success)">📊 Excel</button>
           <button class="btn btn-primary" onclick="openClientModal()">+ Nuovo</button>
         </div>
       </div>
@@ -355,7 +356,10 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
     <div class="section-label">GESTIONE</div>
     <div class="flex-between" style="margin-top:4px;margin-bottom:20px">
       <div class="page-title" style="margin-bottom:0">CONTABILITÀ</div>
-      <button class="btn btn-primary" onclick="openTransactionModal()">+ Movimento</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="exportMonthlyReport()" style="border-color:var(--info);color:var(--info)">📄 Report</button>
+        <button class="btn btn-primary" onclick="openTransactionModal()">+ Movimento</button>
+      </div>
     </div>
     <div class="stats-grid mb24" id="acc-stats"></div>
     <div class="flex-gap mb16">
@@ -506,6 +510,34 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
       </div>
       <div class="field"><label>Indirizzo studio / palestra</label><input id="pt-address" placeholder="Via Roma 1, Milano" oninput="savePTProfile()"></div>
       <div id="pt-save-status" style="font-size:12px;color:var(--success);display:none;margin-top:4px">✅ Salvato!</div>
+    </div>
+
+    <!-- WHATSAPP TEMPLATES -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px">
+        <div style="width:44px;height:44px;border-radius:50%;background:rgba(37,211,102,.12);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0">💬</div>
+        <div>
+          <div style="font-weight:700;font-size:16px">Template WhatsApp</div>
+          <div class="text-muted" style="font-size:12px;margin-top:2px">Personalizza i messaggi automatici</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Promemoria sessione (1 giorno prima)</label>
+        <textarea id="wa-session-template" rows="3" placeholder="Es: Ciao {nome}! Ti ricordo la sessione domani alle {ora} 💪"></textarea>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Variabili: {nome} {data} {ora} {durata}</div>
+      </div>
+      <div class="field">
+        <label>Promemoria pagamento</label>
+        <textarea id="wa-payment-template" rows="3" placeholder="Es: Ciao {nome}! Hai un pagamento in sospeso di {importo} per il pacchetto {pacchetto} 💳"></textarea>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Variabili: {nome} {importo} {pacchetto}</div>
+      </div>
+      <div class="field">
+        <label>Messaggio lead Fitactive</label>
+        <textarea id="wa-lead-template" rows="3" placeholder="Es: Ciao {nome}! Sono il tuo Personal Trainer di Fitactive 💪"></textarea>
+        <div style="font-size:11px;color:var(--muted);margin-top:4px">Variabili: {nome}</div>
+      </div>
+      <button onclick="saveWATemplates()" style="background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;border:none;border-radius:50px;padding:11px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">💾 Salva template</button>
+      <div id="wa-save-status" style="font-size:12px;color:var(--success);display:none;margin-top:8px;text-align:center">✅ Salvato!</div>
     </div>
 
     <!-- BACKUP -->
@@ -1879,6 +1911,7 @@ function openAllGoogleCalendar() {
 
 // ─── SETTINGS ────────────────────────────────────────────────────────────────
 function loadSettings() {
+  loadWATemplates();
   // Google Calendar
   const gcalOn = localStorage.getItem('pt_gcal_enabled') === 'true';
   const gcalEmail = localStorage.getItem('pt_gcal_email') || '';
@@ -2442,7 +2475,7 @@ function renderLeads(){
     if(l.freeLesson){var fl=document.createElement('div');var flC=l.freeLesson==='si'?'var(--success)':l.freeLesson==='no'?'var(--danger)':'var(--warning)';var flT=l.freeLesson==='si'?'✅ Free eseguita':l.freeLesson==='no'?'❌ Free non eseguita':'📅 Free programmata';fl.style.cssText='display:inline-block;font-size:11px;font-weight:700;margin-top:6px;padding:4px 12px;border-radius:50px;background:'+flC.replace('var(--success)','rgba(46,204,113,.15)').replace('var(--danger)','rgba(255,59,59,.15)').replace('var(--warning)','rgba(243,156,18,.15)')+';color:'+flC;fl.textContent=flT+(l.freeLessonDate?' — '+fmt(l.freeLessonDate):'');card.appendChild(fl);}
     if(l.notes){var d=document.createElement('div');d.style.cssText='font-size:12px;color:var(--muted);font-style:italic;margin-top:6px;padding:8px;background:var(--surface2);border-radius:8px';d.textContent='"'+l.notes+'"';card.appendChild(d);}
     var row=document.createElement('div');row.style.cssText='display:flex;gap:6px;margin-top:10px;flex-wrap:wrap';
-    if(l.phone){var bw=document.createElement('button');bw.textContent='💬 WA';bw.style.cssText='flex:1;background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(p,n){bw.onclick=function(e){e.stopPropagation();window.open('https://wa.me/'+p.replace(/[^0-9+]/g,'')+'?text='+encodeURIComponent('Ciao '+n+'! Sono il tuo PT di Fitactive 💪'),'_blank');};})(l.phone,l.name.split(' ')[0]);row.appendChild(bw);}
+    if(l.phone){var bw=document.createElement('button');bw.textContent='💬 WA';bw.style.cssText='flex:1;background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(p,n){bw.onclick=function(e){e.stopPropagation();var tmpl=getWATemplate('lead').replace('{nome}',n);window.open('https://wa.me/'+p.replace(/[^0-9+]/g,'')+'?text='+encodeURIComponent(tmpl),'_blank');};})(l.phone,l.name.split(' ')[0]);row.appendChild(bw);}
     var isG=l.status==='gestito';
     // Pulsante GESTITO
     var bg=document.createElement('button');
@@ -2577,8 +2610,137 @@ function exportLeadsExcel() {
   XLSX.writeFile(wb, filename);
 }
 
+// ─── WHATSAPP TEMPLATES ───────────────────────────────────────────────────────
+function loadWATemplates() {
+  var t = JSON.parse(localStorage.getItem('pt_wa_templates')||'{}');
+  var el;
+  el=document.getElementById('wa-session-template'); if(el) el.value=t.session||'Ciao {nome}! Ti ricordo la sessione domani {data} alle {ora} 💪 A presto!';
+  el=document.getElementById('wa-payment-template'); if(el) el.value=t.payment||'Ciao {nome}! Hai un pagamento in sospeso di {importo} per il pacchetto {pacchetto} 💳';
+  el=document.getElementById('wa-lead-template');    if(el) el.value=t.lead||'Ciao {nome}! Sono il tuo Personal Trainer di Fitactive. Come posso aiutarti a raggiungere i tuoi obiettivi? 💪';
+}
+
+function saveWATemplates() {
+  var t = {
+    session: document.getElementById('wa-session-template').value,
+    payment: document.getElementById('wa-payment-template').value,
+    lead:    document.getElementById('wa-lead-template').value,
+  };
+  localStorage.setItem('pt_wa_templates', JSON.stringify(t));
+  var st=document.getElementById('wa-save-status'); if(st){st.style.display='block';setTimeout(function(){st.style.display='none';},2000);}
+}
+
+function getWATemplate(type) {
+  var t = JSON.parse(localStorage.getItem('pt_wa_templates')||'{}');
+  var defaults = {
+    session: 'Ciao {nome}! Ti ricordo la sessione domani {data} alle {ora} 💪 A presto!',
+    payment: 'Ciao {nome}! Hai un pagamento in sospeso di {importo} per il pacchetto {pacchetto} 💳',
+    lead:    'Ciao {nome}! Sono il tuo Personal Trainer di Fitactive. Come posso aiutarti? 💪',
+  };
+  return t[type] || defaults[type] || '';
+}
+
+function sendWhatsAppSession(session) {
+  var cl = DB.clients.find(function(c){return c.id===session.clientId;});
+  if(!cl||!cl.phone) return alert('Numero di telefono non presente per questo cliente');
+  var tmpl = getWATemplate('session');
+  var msg = tmpl
+    .replace('{nome}', cl.name.split(' ')[0])
+    .replace('{data}', fmt(session.date))
+    .replace('{ora}', session.time||'')
+    .replace('{durata}', (session.duration||60)+'min');
+  var clean = cl.phone.replace(/[^0-9+]/g,'');
+  window.open('https://wa.me/'+clean+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+function sendWhatsAppPayment(clientId, pkgName, amount) {
+  var cl = DB.clients.find(function(c){return c.id===clientId;});
+  if(!cl||!cl.phone) return alert('Numero di telefono non presente');
+  var tmpl = getWATemplate('payment');
+  var msg = tmpl
+    .replace('{nome}', cl.name.split(' ')[0])
+    .replace('{importo}', fmtMoney(amount))
+    .replace('{pacchetto}', pkgName||'');
+  var clean = cl.phone.replace(/[^0-9+]/g,'');
+  window.open('https://wa.me/'+clean+'?text='+encodeURIComponent(msg),'_blank');
+}
+
+// ─── MONTHLY REPORT PDF ───────────────────────────────────────────────────────
+function exportMonthlyReport() {
+  var m = +document.getElementById('acc-month').value;
+  var y = +document.getElementById('acc-year').value;
+  var MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var transactions = DB.transactions.filter(function(t){
+    var d=new Date(t.date); return d.getMonth()===m&&d.getFullYear()===y;
+  });
+  var income = transactions.filter(function(t){return t.type==='entrata';}).reduce(function(s,t){return s+ +t.amount;},0);
+  var expense = transactions.filter(function(t){return t.type==='uscita';}).reduce(function(s,t){return s+ +t.amount;},0);
+  var sessions = DB.sessions.filter(function(s){var d=new Date(s.date);return d.getMonth()===m&&d.getFullYear()===y&&s.done;});
+  var clients = DB.clients;
+  var profile = JSON.parse(localStorage.getItem('pt_profile')||'{}');
+
+  var rows = transactions.sort(function(a,b){return a.date.localeCompare(b.date);}).map(function(t){
+    var cl=clients.find(function(c){return c.id===t.clientId;});
+    return '<tr style="border-bottom:1px solid #eee"><td>'+fmt(t.date)+'</td><td>'+t.description+'</td><td>'+(cl?cl.name:'—')+'</td><td>'+t.method+'</td><td style="text-align:right;color:'+(t.type==='entrata'?'#27ae60':'#e74c3c');+';font-weight:600">'+(t.type==='entrata'?'+':'-')+'€'+Number(t.amount).toFixed(2)+'</td></tr>';
+  }).join('');
+
+  var html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Helvetica Neue,Arial,sans-serif;padding:32px;color:#1a1a1a;font-size:13px}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ff6b00;padding-bottom:16px;margin-bottom:24px}.logo{font-size:36px;font-weight:900;color:#ff6b00;letter-spacing:3px}.period{text-align:right;font-size:13px;color:#666}.period strong{font-size:18px;color:#1a1a1a;display:block}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.kpi{background:#f9f9f9;border-radius:8px;padding:14px 16px;text-align:center}.kpi .val{font-size:24px;font-weight:800;margin:6px 0}.kpi .lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px}table{width:100%;border-collapse:collapse}th{background:#ff6b00;color:#fff;padding:10px 12px;text-align:left;font-size:12px}td{padding:9px 12px;font-size:12px}.footer{margin-top:28px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#999;text-align:center}.print-btn{position:fixed;top:16px;right:16px;background:#ff6b00;color:#fff;border:none;padding:10px 20px;border-radius:50px;font-weight:700;cursor:pointer;font-size:13px}@media print{.print-btn{display:none}}</style></head><body>'
+  +'<button class="print-btn" onclick="window.print()">🖨 Stampa PDF</button>'
+  +'<div class="header"><div><div class="logo">PT MANAGER</div>'+(profile.name?'<div style="margin-top:4px;font-size:13px;color:#666">'+profile.name+'</div>':'')+'</div>'
+  +'<div class="period"><strong>'+MESI[m]+' '+y+'</strong>Report mensile</div></div>'
+  +'<div class="kpis">'
+  +'<div class="kpi"><div class="lbl">Incassi</div><div class="val" style="color:#27ae60">€'+income.toFixed(2)+'</div></div>'
+  +'<div class="kpi"><div class="lbl">Uscite</div><div class="val" style="color:#e74c3c">€'+expense.toFixed(2)+'</div></div>'
+  +'<div class="kpi"><div class="lbl">Netto</div><div class="val" style="color:'+(income-expense>=0?'#ff6b00':'#e74c3c')+'">€'+(income-expense).toFixed(2)+'</div></div>'
+  +'<div class="kpi"><div class="lbl">Sessioni</div><div class="val" style="color:#3498db">'+sessions.length+'</div></div>'
+  +'<div class="kpi"><div class="lbl">Clienti attivi</div><div class="val">'+new Set(sessions.map(function(s){return s.clientId;})).size+'</div></div>'
+  +'<div class="kpi"><div class="lbl">Transazioni</div><div class="val">'+transactions.length+'</div></div>'
+  +'</div>'
+  +'<table><thead><tr><th>Data</th><th>Descrizione</th><th>Cliente</th><th>Metodo</th><th style="text-align:right">Importo</th></tr></thead><tbody>'+rows+'</tbody>'
+  +'<tfoot><tr style="background:#f9f9f9"><td colspan="4" style="padding:10px 12px;font-weight:700">TOTALE NETTO</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:'+(income-expense>=0?'#27ae60':'#e74c3c')+'">€'+(income-expense).toFixed(2)+'</td></tr></tfoot></table>'
+  +'<div class="footer">Report generato da PT Manager · '+new Date().toLocaleDateString('it-IT')+'</div>'
+  +'</body></html>';
+
+  showPDFOverlay(html, 'report-'+MESI[m].toLowerCase()+'-'+y);
+}
+
+// ─── EXPORT CLIENTS EXCEL ────────────────────────────────────────────────────
+function exportClientsExcel() {
+  if(typeof XLSX==='undefined'){alert('Libreria Excel non disponibile');return;}
+  var rows=DB.clients.map(function(c){
+    var ss=DB.sessions.filter(function(s){return s.clientId===c.id&&s.done;}).length;
+    var pp=DB.packages.filter(function(p){return p.clientId===c.id;}).length;
+    return {'Nome':c.name||'','Telefono':c.phone||'','Email':c.email||'','Cod.Fiscale':c.cf||'','Data nascita':c.birthdate?new Date(c.birthdate+'T12:00:00').toLocaleDateString('it-IT'):'','Indirizzo':c.address||'','Città':c.city||'','CAP':c.cap||'','Prov':c.prov||'','Sessioni effettuate':ss,'Pacchetti':pp,'Note':c.notes||'','Cliente dal':c.createdAt?new Date(c.createdAt+'T12:00:00').toLocaleDateString('it-IT'):''};
+  });
+  if(!rows.length){alert('Nessun cliente da esportare');return;}
+  var ws=XLSX.utils.json_to_sheet(rows);
+  ws['!cols']=[{wch:22},{wch:16},{wch:24},{wch:18},{wch:14},{wch:24},{wch:16},{wch:8},{wch:6},{wch:8},{wch:8},{wch:30},{wch:12}];
+  var wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'Clienti');
+  XLSX.writeFile(wb,'clienti-pt-'+todayStr()+'.xlsx');
+}
+
+// ─── AUTO WEEKLY BACKUP ───────────────────────────────────────────────────────
+function checkAutoBackup() {
+  var lastBackup=parseInt(localStorage.getItem('pt_last_auto_backup')||'0');
+  var elapsed=Date.now()-lastBackup;
+  var WEEK=7*24*60*60*1000;
+  if(elapsed>WEEK){
+    // Show reminder after 3 seconds
+    setTimeout(function(){
+      var toast=document.createElement('div');
+      toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#ff6b00;color:#fff;border-radius:50px;padding:12px 20px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(255,107,0,.4);cursor:pointer;white-space:nowrap';
+      toast.innerHTML='💾 Fai un backup settimanale!';
+      toast.onclick=function(){openBackupModal();toast.remove();};
+      document.body.appendChild(toast);
+      setTimeout(function(){if(toast.parentNode)toast.remove();},8000);
+    },3000);
+    localStorage.setItem('pt_last_auto_backup',Date.now().toString());
+  }
+}
+
 renderDashboard();
 checkLeadNotifs();
+checkAutoBackup();
 initNotifications();
 updateMobileUI("dashboard");
 </script>
