@@ -575,16 +575,16 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
 
   <div id="page-leads" class="page">
     <div class="section-label">FITACTIVE</div>
-    <div class="flex-between" style="margin-top:4px;margin-bottom:16px">
-      <div class="page-title" style="margin-bottom:0">LEADS</div>
-      <div style="display:flex;gap:8px">
-        <button class="btn btn-secondary btn-sm" onclick="exportLeadsExcel()" style="border-color:var(--success);color:var(--success)">📊 Excel</button>
-        <button class="btn btn-primary" onclick="openLeadModal()">+ Nuovo</button>
+    <div class="flex-between" style="margin-top:4px;margin-bottom:12px">
+      <div class="page-title" style="margin-bottom:0;font-size:clamp(24px,6vw,42px)">LEADS</div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button class="btn btn-secondary btn-sm" onclick="exportLeadsExcel()" style="border-color:var(--success);color:var(--success);padding:7px 12px;font-size:12px">📊 Excel</button>
+        <button class="btn btn-primary" style="padding:7px 16px;font-size:13px" onclick="openLeadModal()">+ Nuovo</button>
       </div>
     </div>
     <!-- Filtro mese/anno -->
-    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
-      <select id="leads-filter-month" onchange="renderLeads()" style="flex:1;border-radius:50px;font-size:14px">
+    <div style="display:flex;gap:8px;margin-bottom:12px">
+      <select id="leads-filter-month" onchange="renderLeads()" style="flex:1;border-radius:50px;font-size:14px;min-width:0">
         <option value="">Tutti i mesi</option>
         <option value="1">Gennaio</option><option value="2">Febbraio</option>
         <option value="3">Marzo</option><option value="4">Aprile</option>
@@ -593,7 +593,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
         <option value="9">Settembre</option><option value="10">Ottobre</option>
         <option value="11">Novembre</option><option value="12">Dicembre</option>
       </select>
-      <select id="leads-filter-year" onchange="renderLeads()" style="flex:1;border-radius:50px;font-size:14px">
+      <select id="leads-filter-year" onchange="renderLeads()" style="flex:1;border-radius:50px;font-size:14px;min-width:0">
         <option value="">Tutti gli anni</option>
         <option value="2024">2024</option>
         <option value="2025">2025</option>
@@ -1227,7 +1227,7 @@ function updateMobileUI(page) {
   const active = document.getElementById('bnav-'+page);
   if (active) active.classList.add('active');
   // Add top padding for fixed header
-  document.getElementById('main').style.paddingTop = '52px';
+  document.getElementById('main').style.paddingTop = '56px';
 }
 
 // ─── BACKUP ───────────────────────────────────────────────────────────────────
