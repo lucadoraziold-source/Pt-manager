@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="PT Manager">
 <link rel="apple-touch-icon" href="icon-192.png">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -239,9 +240,9 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
 <body>
 
 <!-- MOBILE HEADER -->
-<div id="mobile-header" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--surface);border-bottom:1.5px solid var(--border);padding:12px 18px;align-items:center;justify-content:space-between;">
-  <div style="font-family:'Bebas Neue';font-size:26px;letter-spacing:3px;color:var(--accent)">PT <span style="color:var(--text);font-size:20px" id="mobile-page-title">MANAGER</span></div>
-  <div style="display:flex;gap:8px"><button onclick="toggleGlobalSearch()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:7px 12px;font-size:16px;font-family:inherit;cursor:pointer;">🔍</button><button onclick="openBackupModal()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">💾</button></div>
+<div id="mobile-header" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;align-items:center;justify-content:space-between;">
+  <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--accent)">PT <span style="color:var(--text);font-size:17px" id="mobile-page-title">MANAGER</span></div>
+  <div style="display:flex;gap:8px"><button onclick="toggleGlobalSearch()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:5px 10px;font-size:15px;font-family:inherit;cursor:pointer;">🔍</button><button onclick="openBackupModal()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">💾</button></div>
 </div>
 
 <div id="app">
@@ -576,7 +577,29 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
     <div class="section-label">FITACTIVE</div>
     <div class="flex-between" style="margin-top:4px;margin-bottom:16px">
       <div class="page-title" style="margin-bottom:0">LEADS</div>
-      <button class="btn btn-primary" onclick="openLeadModal()">+ Nuovo</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="exportLeadsExcel()" style="border-color:var(--success);color:var(--success)">📊 Excel</button>
+        <button class="btn btn-primary" onclick="openLeadModal()">+ Nuovo</button>
+      </div>
+    </div>
+    <!-- Filtro mese/anno -->
+    <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap">
+      <select id="leads-filter-month" onchange="renderLeads()" style="flex:1;border-radius:50px;font-size:14px">
+        <option value="">Tutti i mesi</option>
+        <option value="1">Gennaio</option><option value="2">Febbraio</option>
+        <option value="3">Marzo</option><option value="4">Aprile</option>
+        <option value="5">Maggio</option><option value="6">Giugno</option>
+        <option value="7">Luglio</option><option value="8">Agosto</option>
+        <option value="9">Settembre</option><option value="10">Ottobre</option>
+        <option value="11">Novembre</option><option value="12">Dicembre</option>
+      </select>
+      <select id="leads-filter-year" onchange="renderLeads()" style="flex:1;border-radius:50px;font-size:14px">
+        <option value="">Tutti gli anni</option>
+        <option value="2024">2024</option>
+        <option value="2025">2025</option>
+        <option value="2026">2026</option>
+        <option value="2027">2027</option>
+      </select>
     </div>
     <div class="stats-grid" style="margin-bottom:14px" id="leads-stats"></div>
     <div style="overflow-x:auto;white-space:nowrap;margin-bottom:16px;-webkit-overflow-scrolling:touch">
@@ -1204,7 +1227,7 @@ function updateMobileUI(page) {
   const active = document.getElementById('bnav-'+page);
   if (active) active.classList.add('active');
   // Add top padding for fixed header
-  document.getElementById('main').style.paddingTop = '64px';
+  document.getElementById('main').style.paddingTop = '52px';
 }
 
 // ─── BACKUP ───────────────────────────────────────────────────────────────────
@@ -2352,7 +2375,18 @@ function setLeadFilter(f){
 
 function renderLeads(){
   var all=DB.leads;
-  var list=leadFilter==='tutti'?all.slice():all.filter(function(l){return l.status===leadFilter;});
+  // Month/year filter
+  var fMonth = document.getElementById('leads-filter-month') ? parseInt(document.getElementById('leads-filter-month').value)||0 : 0;
+  var fYear  = document.getElementById('leads-filter-year')  ? parseInt(document.getElementById('leads-filter-year').value)||0  : 0;
+  var list=all.filter(function(l){
+    if(leadFilter!=='tutti' && l.status!==leadFilter) return false;
+    if(fMonth||fYear){
+      var d=new Date((l.createdAt||todayStr())+'T12:00:00');
+      if(fMonth && d.getMonth()+1!==fMonth) return false;
+      if(fYear  && d.getFullYear()!==fYear)  return false;
+    }
+    return true;
+  });
   list.sort(function(a,b){var o={ricontattare:0,da_contattare:1,contattato:2,gestito:3,non_gestito:4};return(o[a.status]||2)-(o[b.status]||2);});
   var se=document.getElementById('leads-stats');
   if(se) se.innerHTML=[
@@ -2471,6 +2505,76 @@ function checkLeadNotifs(){
     var dt=new Date(l.callbackDate+'T09:00:00'),now=new Date();
     if(dt>now)setTimeout(function(){new Notification('🎯 Ricontattare: '+l.name,{icon:'/icon-192.png',tag:'lead-'+l.id});},dt.getTime()-now.getTime());
   });
+}
+
+// ─── EXPORT LEADS EXCEL ───────────────────────────────────────────────────────
+function exportLeadsExcel() {
+  if (typeof XLSX === 'undefined') {
+    alert('Libreria Excel non disponibile. Riprova tra qualche secondo.');
+    return;
+  }
+  var fMonth = parseInt(document.getElementById('leads-filter-month').value)||0;
+  var fYear  = parseInt(document.getElementById('leads-filter-year').value)||0;
+  var MESI=['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+  var statusLabel={da_contattare:'Da contattare',contattato:'Contattato',ricontattare:'Da ricontattare',gestito:'Gestito',non_gestito:'Non gestito'};
+  var freeLessonLabel={'':'',si:'Sì eseguita',no:'No non eseguita',programmata:'Programmata'};
+
+  var all = DB.leads;
+  var filtered = all.filter(function(l){
+    if(leadFilter!=='tutti' && l.status!==leadFilter) return false;
+    if(fMonth||fYear){
+      var d=new Date((l.createdAt||todayStr())+'T12:00:00');
+      if(fMonth && d.getMonth()+1!==fMonth) return false;
+      if(fYear  && d.getFullYear()!==fYear)  return false;
+    }
+    return true;
+  });
+
+  if(!filtered.length){ alert('Nessun lead da esportare con i filtri attuali.'); return; }
+
+  var rows = filtered.map(function(l){
+    return {
+      'Nome': l.name||'',
+      'Telefono': l.phone||'',
+      'Stato': statusLabel[l.status]||l.status||'',
+      'Data contatto': l.contactedDate ? new Date(l.contactedDate+'T12:00:00').toLocaleDateString('it-IT') : '',
+      'Da ricontattare': l.callbackDate ? new Date(l.callbackDate+'T12:00:00').toLocaleDateString('it-IT') : '',
+      'Lezione free': freeLessonLabel[l.freeLesson||'']||'',
+      'Data lezione free': l.freeLessonDate ? new Date(l.freeLessonDate+'T12:00:00').toLocaleDateString('it-IT') : '',
+      'Note': l.notes||'',
+      'Aggiunto il': l.createdAt ? new Date(l.createdAt+'T12:00:00').toLocaleDateString('it-IT') : '',
+    };
+  });
+
+  var ws = XLSX.utils.json_to_sheet(rows);
+
+  // Column widths
+  ws['!cols'] = [
+    {wch:22},{wch:16},{wch:16},{wch:14},{wch:14},{wch:16},{wch:16},{wch:30},{wch:12}
+  ];
+
+  // Header style
+  var range = XLSX.utils.decode_range(ws['!ref']);
+  for(var C=range.s.c; C<=range.e.c; C++){
+    var addr = XLSX.utils.encode_cell({r:0,c:C});
+    if(!ws[addr]) continue;
+    ws[addr].s = {font:{bold:true},fill:{fgColor:{rgb:'FF6B00'}},alignment:{horizontal:'center'}};
+  }
+
+  var wb = XLSX.utils.book_new();
+  var sheetName = 'Leads';
+  if(fMonth&&fYear) sheetName = MESI[fMonth-1]+' '+fYear;
+  else if(fMonth) sheetName = MESI[fMonth-1];
+  else if(fYear) sheetName = String(fYear);
+  XLSX.utils.book_append_sheet(wb, ws, sheetName);
+
+  var filename = 'fitactive-leads';
+  if(fMonth&&fYear) filename += '-'+MESI[fMonth-1].toLowerCase()+'-'+fYear;
+  else if(fMonth) filename += '-'+MESI[fMonth-1].toLowerCase();
+  else if(fYear) filename += '-'+fYear;
+  filename += '.xlsx';
+
+  XLSX.writeFile(wb, filename);
 }
 
 renderDashboard();
