@@ -1280,6 +1280,7 @@ function exportBackup() {
     payments: DB.payments,
     profile: JSON.parse(localStorage.getItem('pt_profile')||'{}'),
     photos: DB.photos,
+    leads: DB.leads,
   };
   const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
   const url = URL.createObjectURL(blob);
@@ -1299,7 +1300,8 @@ function importBackup(event) {
   reader.onload = async function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data.version) throw new Error('File non valido');
+      // Accept both old (no version) and new backup formats
+      if (!data.version && !data.clients && !data.sessions) throw new Error('File non valido');
       if (!await customConfirm('Sovrascrivere tutti i dati attuali con il backup? I dati correnti saranno sostituiti.','⚠️ RIPRISTINA BACKUP','Sì, ripristina','btn-primary')) return;
       if (data.clients) DB.clients = data.clients;
       if (data.sessions) DB.sessions = data.sessions;
@@ -1309,6 +1311,8 @@ function importBackup(event) {
       if (data.payments) DB.payments = data.payments;
       if (data.leads) DB.leads = data.leads;
       if (data.photos) DB.photos = data.photos;
+      // Also check pt_leads key directly (legacy format)
+      if (!data.leads && data.pt_leads) DB.leads = data.pt_leads;
       const st = document.getElementById('backup-status');
       st.style.background = 'rgba(46,204,113,.12)'; st.style.color = 'var(--success)';
       st.textContent = '✅ Dati ripristinati con successo!';
