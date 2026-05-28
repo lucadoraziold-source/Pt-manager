@@ -123,9 +123,9 @@ html, body { max-width: 100vw; overflow-x: hidden; }
   #main { padding: 72px 12px 90px; width: 100%; max-width: 100vw; overflow-x: hidden; }
 
   /* Bottom nav */
-  #bottom-nav { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1.5px solid var(--border); z-index: 900; padding: 6px 0 max(6px, env(safe-area-inset-bottom)); justify-content: space-around; }
-  .bnav-item { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 6px 2px; border: none; background: transparent; color: var(--muted); font-size: 9px; font-weight: 600; cursor: pointer; transition: all .15s; flex: 1; }
-  .bnav-icon { font-size: 20px; line-height: 1; }
+  #bottom-nav { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1.5px solid var(--border); z-index: 900; padding: 5px 0 max(5px, env(safe-area-inset-bottom)); justify-content: space-between; }
+  .bnav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 5px 0; border: none; background: transparent; color: var(--muted); font-size: 8px; font-weight: 600; cursor: pointer; transition: all .15s; flex: 1 1 0; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; max-width: 13%; }
+  .bnav-icon { font-size: 19px; line-height: 1; }
   .bnav-item.active { color: var(--accent); }
   .bnav-item.active .bnav-icon { filter: drop-shadow(0 0 6px rgba(255,107,0,.6)); }
 
@@ -240,7 +240,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
 <body>
 
 <!-- MOBILE HEADER -->
-<div id="mobile-header" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;align-items:center;justify-content:space-between;">
+<div id="mobile-header" style="display:none;position:fixed;top:0;left:0;right:0;z-index:800;background:var(--surface);border-bottom:1.5px solid var(--border);padding:8px 14px;padding-top:max(8px,env(safe-area-inset-top));align-items:center;justify-content:space-between;">
   <div style="font-family:'Bebas Neue';font-size:22px;letter-spacing:2px;color:var(--accent)">PT <span style="color:var(--text);font-size:17px" id="mobile-page-title">MANAGER</span></div>
   <div style="display:flex;gap:8px"><button onclick="toggleGlobalSearch()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:5px 10px;font-size:15px;font-family:inherit;cursor:pointer;">🔍</button><button onclick="openBackupModal()" style="background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:50px;padding:7px 14px;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer;">💾</button></div>
 </div>
@@ -269,6 +269,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
     <div class="section-label">BENVENUTO</div>
     <div class="page-title">DASHBOARD <span style="color:var(--accent)">PT</span></div>
     <div class="stats-grid" id="dash-stats"></div>
+    <div id="dash-overdue" style="margin-bottom:16px"></div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
       <div class="card"><div class="bebas" style="font-size:16px;color:var(--muted);margin-bottom:14px;letter-spacing:2px" id="dash-today-title">OGGI</div><div id="dash-today-list"></div></div>
       <div class="card"><div class="bebas" style="font-size:16px;color:var(--muted);margin-bottom:14px;letter-spacing:2px">PROSSIMI</div><div id="dash-upcoming-list"></div></div>
@@ -553,6 +554,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
         <button onclick="exportBackup()" style="background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;border:none;border-radius:50px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">⬇️ Scarica backup JSON</button>
         <button onclick="document.getElementById('import-file-settings').click()" style="background:var(--surface2);color:var(--text);border:1.5px solid var(--border);border-radius:50px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">⬆️ Ripristina da backup</button>
         <input type="file" id="import-file-settings" accept=".json" style="display:none" onchange="importBackupFromSettings(event)">
+        <button onclick="restoreSnapshot()" style="background:rgba(52,152,219,.1);color:var(--info);border:1.5px solid var(--info);border-radius:50px;padding:13px 22px;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer">🔄 Ripristina ultimo salvataggio automatico</button>
       </div>
       <div id="settings-backup-status" style="margin-top:12px;font-size:13px;text-align:center;padding:10px;border-radius:var(--radius-sm);display:none"></div>
     </div>
@@ -567,6 +569,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
         </div>
       </div>
       <button onclick="confirmReset()" style="background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:50px;padding:11px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">🗑 Cancella tutti i dati</button>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">PT Manager · versione 2.0</div>
     </div>
   </div>
 
@@ -581,12 +584,12 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
     <div class="stats-grid mb24" id="stats-kpis"></div>
     <div class="grid2-detail" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
       <div class="card">
-        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:16px">💶 INCASSI MENSILI</div>
-        <div id="chart-income" style="height:180px;display:flex;align-items:flex-end;gap:6px;padding-bottom:28px;position:relative"></div>
+        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:12px">💶 INCASSI MENSILI</div>
+        <canvas id="chart-income" height="120" style="width:100%;display:block"></canvas>
       </div>
       <div class="card">
-        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:16px">🏋️ SESSIONI MENSILI</div>
-        <div id="chart-sessions" style="height:180px;display:flex;align-items:flex-end;gap:6px;padding-bottom:28px;position:relative"></div>
+        <div class="bebas" style="font-size:14px;letter-spacing:2px;color:var(--muted);margin-bottom:12px">🏋️ SESSIONI MENSILI</div>
+        <canvas id="chart-sessions" height="120" style="width:100%;display:block"></canvas>
       </div>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
@@ -831,6 +834,8 @@ function renderPage(page){
   else if(page==='packages')renderPackages();
   else if(page==='accounting')renderAccounting();
   else if(page==='stats')renderStats();
+  else if(page==='leads')renderLeads();
+  if(typeof autoSnapshot==='function') autoSnapshot();
 }
 
 function renderDashboard(){
@@ -849,6 +854,30 @@ function renderDashboard(){
   document.getElementById('dash-today-list').innerHTML=todaySessions.length===0?'<div class="empty-state">Nessuna sessione 🎉</div>':todaySessions.map(s=>{const cl=clients.find(c=>c.id===s.clientId);return`<div class="row-item"><div><b>${s.time}</b><span class="text-muted" style="margin-left:8px">${cl?.name||'—'}</span></div><span style="color:${s.done?'var(--success)':'var(--muted)'};font-size:13px">${s.done?'✓':s.duration+'m'}</span></div>`;}).join('');
   const upcoming=sessions.filter(s=>s.date>=todayStr()&&!s.done).sort((a,b)=>a.date.localeCompare(b.date)||a.time.localeCompare(b.time)).slice(0,5);
   document.getElementById('dash-upcoming-list').innerHTML=upcoming.length===0?'<div class="empty-state">Nessun appuntamento</div>':upcoming.map(s=>{const cl=clients.find(c=>c.id===s.clientId);return`<div class="row-item"><div><b>${cl?.name||'—'}</b><br><span class="text-muted" style="font-size:12px">${fmt(s.date)} · ${s.time}</span></div><span class="text-muted" style="font-size:12px">${s.duration}m</span></div>`;}).join('');
+  renderOverduePayments();
+}
+
+function renderOverduePayments(){
+  var el=document.getElementById('dash-overdue');
+  if(!el) return;
+  var overdue=DB.packages.filter(function(p){
+    if(p.status!=='attivo') return false;
+    var paid=DB.payments.filter(function(py){return py.packageId===p.id;}).reduce(function(s,py){return s+ +py.amount;},0);
+    var price=+p.price||0;
+    return price>0 && paid<price;
+  }).map(function(p){
+    var cl=DB.clients.find(function(c){return c.id===p.clientId;});
+    var paid=DB.payments.filter(function(py){return py.packageId===p.id;}).reduce(function(s,py){return s+ +py.amount;},0);
+    return {name:cl?cl.name:'—',pkg:p.name,residuo:(+p.price||0)-paid,phone:cl?cl.phone:'',clientId:p.clientId};
+  });
+  if(!overdue.length){ el.innerHTML=''; return; }
+  var total=overdue.reduce(function(s,o){return s+o.residuo;},0);
+  el.innerHTML='<div class="card" style="border-left:3px solid var(--warning);background:rgba(243,156,18,.06)">'+
+    '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px"><span style="font-size:20px">⚠️</span>'+
+    '<div style="font-weight:700;font-size:14px">Pagamenti in sospeso ('+overdue.length+')</div>'+
+    '<span style="margin-left:auto;font-weight:800;color:var(--warning)">'+fmtMoney(total)+'</span></div>'+
+    overdue.map(function(o){return '<div class="row-item" style="font-size:13px"><div><b>'+o.name+'</b><br><span class="text-muted" style="font-size:11px">'+o.pkg+'</span></div><span style="color:var(--warning);font-weight:700">'+fmtMoney(o.residuo)+'</span></div>';}).join('')+
+    '</div>';
 }
 
 function renderCalendar(){
@@ -1258,8 +1287,10 @@ function updateMobileUI(page) {
   document.querySelectorAll('.bnav-item').forEach(b => b.classList.remove('active'));
   const active = document.getElementById('bnav-'+page);
   if (active) active.classList.add('active');
-  // Add top padding for fixed header
-  document.getElementById('main').style.paddingTop = '56px';
+  // Add top padding for fixed header — measure actual height to avoid overlap
+  var hdr = document.getElementById('mobile-header');
+  var hH = hdr ? hdr.offsetHeight : 56;
+  document.getElementById('main').style.paddingTop = (hH + 8) + 'px';
 }
 
 // ─── BACKUP ───────────────────────────────────────────────────────────────────
@@ -2211,20 +2242,53 @@ function renderStats() {
     monthlySessions[m]++;
   });
 
-  const renderBarChart = (containerId, data, color, suffix='') => {
-    const max = Math.max(...data, 1);
-    const container = document.getElementById(containerId);
-    if (!container) return;
-    const shortMonths = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
-    container.innerHTML = data.map((v,i) => {
-      const h = Math.max(4, Math.round((v/max)*150));
-      const isCurrentMonth = i === new Date().getMonth() && year === new Date().getFullYear();
-      return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px">
-        <div style="font-size:9px;color:var(--muted);font-weight:600">${v>0?(suffix==='€'?'€'+Math.round(v):v):''}</div>
-        <div style="width:100%;height:${h}px;background:${isCurrentMonth?'var(--accent)':color};border-radius:4px 4px 0 0;min-height:4px;transition:height .3s"></div>
-        <div style="font-size:9px;color:var(--muted)">${shortMonths[i]}</div>
-      </div>`;
-    }).join('');
+  const renderBarChart = (containerId, data, color, suffix) => {
+    var canvas = document.getElementById(containerId);
+    if (!canvas || !canvas.getContext) return;
+    var cssW = canvas.offsetWidth || canvas.parentElement.offsetWidth || 300;
+    var dpr = window.devicePixelRatio || 1;
+    canvas.width = cssW * dpr;
+    canvas.height = 120 * dpr;
+    canvas.style.width = '100%';
+    canvas.style.height = '120px';
+    var ctx = canvas.getContext('2d');
+    ctx.scale(dpr, dpr);
+    var W = cssW, H = 120;
+    var max = Math.max.apply(null, data.concat([1]));
+    var months = ['G','F','M','A','M','G','L','A','S','O','N','D'];
+    var LABEL_H = 16;       // space for month letters
+    var TOP_PAD = 16;       // space for value labels
+    var BAR_AREA = H - LABEL_H - TOP_PAD;
+    var slotW = W / 12;
+    var nowM = new Date().getMonth(), nowY = new Date().getFullYear();
+    ctx.clearRect(0, 0, W, H);
+    var solid = color.replace('rgba','rgb').replace(/,\s*\.?\d+\)/, ')');
+    data.forEach(function(v, i) {
+      var barH = v > 0 ? Math.max(3, Math.round((v / max) * BAR_AREA)) : 0;
+      var x = i * slotW;
+      var y = TOP_PAD + (BAR_AREA - barH);
+      var isCur = i === nowM && year === nowY;
+      // bar
+      ctx.fillStyle = isCur ? '#ff6b00' : solid;
+      var bw = slotW * 0.6, bx = x + slotW * 0.2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(bx, y, bw, barH, [3,3,0,0]);
+      else ctx.rect(bx, y, bw, barH);
+      ctx.fill();
+      // value label (only if there's a value)
+      if (v > 0) {
+        ctx.fillStyle = '#999';
+        ctx.font = '8px DM Sans, sans-serif';
+        ctx.textAlign = 'center';
+        var lbl = suffix === '€' ? '€' + Math.round(v) : String(v);
+        ctx.fillText(lbl, x + slotW/2, y - 4 < 8 ? 8 : y - 4);
+      }
+      // month letter
+      ctx.fillStyle = '#777';
+      ctx.font = 'bold 9px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText(months[i], x + slotW/2, H - 3);
+    });
   };
 
   renderBarChart('chart-income', monthlyIncome, 'rgba(46,204,113,.5)', '€');
@@ -2724,16 +2788,52 @@ function exportClientsExcel() {
 }
 
 // ─── AUTO WEEKLY BACKUP ───────────────────────────────────────────────────────
+function autoSnapshot() {
+  // Keep an automatic internal snapshot of all data in a separate key.
+  // This survives even if the user never does a manual backup.
+  try {
+    var snap = {
+      version: 1,
+      savedAt: new Date().toISOString(),
+      clients: DB.clients, sessions: DB.sessions, packages: DB.packages,
+      transactions: DB.transactions, deductions: DB.deductions,
+      payments: DB.payments, photos: DB.photos, leads: DB.leads,
+      profile: JSON.parse(localStorage.getItem('pt_profile')||'{}')
+    };
+    localStorage.setItem('pt_auto_snapshot', JSON.stringify(snap));
+  } catch(e) {}
+}
+
+function restoreSnapshot() {
+  try {
+    var raw = localStorage.getItem('pt_auto_snapshot');
+    if (!raw) { alert('Nessuno snapshot automatico trovato.'); return; }
+    var d = JSON.parse(raw);
+    if (d.clients) DB.clients = d.clients;
+    if (d.sessions) DB.sessions = d.sessions;
+    if (d.packages) DB.packages = d.packages;
+    if (d.transactions) DB.transactions = d.transactions;
+    if (d.deductions) DB.deductions = d.deductions;
+    if (d.payments) DB.payments = d.payments;
+    if (d.photos) DB.photos = d.photos;
+    if (d.leads) DB.leads = d.leads;
+    if (d.profile) localStorage.setItem('pt_profile', JSON.stringify(d.profile));
+    alert('✅ Dati ripristinati dallo snapshot del ' + new Date(d.savedAt).toLocaleString('it-IT'));
+    renderPage(currentPage);
+  } catch(e) { alert('Errore nel ripristino snapshot.'); }
+}
+
 function checkAutoBackup() {
+  // Always update the internal snapshot on every app open
+  autoSnapshot();
   var lastBackup=parseInt(localStorage.getItem('pt_last_auto_backup')||'0');
   var elapsed=Date.now()-lastBackup;
   var WEEK=7*24*60*60*1000;
   if(elapsed>WEEK){
-    // Show reminder after 3 seconds
     setTimeout(function(){
       var toast=document.createElement('div');
       toast.style.cssText='position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#ff6b00;color:#fff;border-radius:50px;padding:12px 20px;font-size:13px;font-weight:600;z-index:9999;box-shadow:0 4px 16px rgba(255,107,0,.4);cursor:pointer;white-space:nowrap';
-      toast.innerHTML='💾 Fai un backup settimanale!';
+      toast.innerHTML='💾 Scarica un backup di sicurezza!';
       toast.onclick=function(){openBackupModal();toast.remove();};
       document.body.appendChild(toast);
       setTimeout(function(){if(toast.parentNode)toast.remove();},8000);
