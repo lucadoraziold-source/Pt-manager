@@ -595,7 +595,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
         </div>
       </div>
       <button onclick="confirmReset()" style="background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:50px;padding:11px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">🗑 Cancella tutti i dati</button>
-      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">Active PT Manager · versione 2.4</div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">Active PT Manager · versione 2.5</div>
     </div>
   </div>
 
@@ -1045,12 +1045,12 @@ function renderClientDetail(id){
         <button class="btn btn-danger btn-sm" onclick="deleteClient('${id}')">🗑</button>
       </div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
+    <div class="grid2-detail" style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px">
       <div class="card">
         <div class="bebas" style="font-size:13px;letter-spacing:3px;margin-bottom:14px;color:var(--accent)">DATI PERSONALI</div>
         ${cl.phone?`<div class="row-item"><span class="text-muted" style="font-size:12px">📞 Telefono</span><a href="tel:${cl.phone}" style="font-size:14px;font-weight:600;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:6px">${cl.phone} <span style="font-size:10px;background:rgba(255,107,0,.15);padding:2px 8px;border-radius:50px">CHIAMA</span></a></div>`:''}
         ${cl.phone?`<div class="row-item"><span class="text-muted" style="font-size:12px">💬 WhatsApp</span><a href="https://wa.me/${cl.phone.replace(/[^0-9]/g,'')}" target="_blank" style="font-size:14px;font-weight:600;color:#25D366;text-decoration:none;display:flex;align-items:center;gap:6px">${cl.phone} <span style="font-size:10px;background:rgba(37,211,102,.15);padding:2px 8px;border-radius:50px">APRI</span></a></div>`:''}
-        ${cl.email?`<div class="row-item"><span class="text-muted" style="font-size:12px">📧 Email</span><a href="mailto:${cl.email}" style="font-size:14px;font-weight:600;color:var(--info);text-decoration:none;display:flex;align-items:center;gap:6px">${cl.email} <span style="font-size:10px;background:rgba(52,152,219,.15);padding:2px 8px;border-radius:50px">SCRIVI</span></a></div>`:''}
+        ${cl.email?`<div class="row-item"><span class="text-muted" style="font-size:12px">📧 Email</span><a href="mailto:${cl.email}" style="font-size:13px;font-weight:600;color:var(--info);text-decoration:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:62%"><span style="word-break:break-all">${cl.email}</span> <span style="font-size:10px;background:rgba(52,152,219,.15);padding:2px 8px;border-radius:50px;white-space:nowrap;flex-shrink:0">SCRIVI</span></a></div>`:''}
         ${cl.birthdate?`<div class="row-item"><span class="text-muted" style="font-size:12px">🎂 Data di nascita</span><span style="font-size:14px;font-weight:600">${fmt(cl.birthdate)} ${(()=>{const b=new Date(cl.birthdate);const today=new Date();let age=today.getFullYear()-b.getFullYear();const m=today.getMonth()-b.getMonth();if(m<0||(m===0&&today.getDate()<b.getDate()))age--;return '<span style="font-size:12px;color:var(--muted);font-weight:400">('+age+' anni)</span>';})()}</span></div>`:''}
         ${cl.cf?`<div class="row-item"><span class="text-muted" style="font-size:12px">🪪 Codice fiscale</span><span style="font-size:14px;font-weight:600;letter-spacing:1px;cursor:pointer" onclick="navigator.clipboard&&navigator.clipboard.writeText('${cl.cf}').then(()=>{this.style.color='var(--success)';setTimeout(()=>this.style.color='',1200)})" title="Tocca per copiare">${cl.cf} <span style="font-size:10px;background:rgba(136,136,170,.12);padding:2px 8px;border-radius:50px;color:var(--muted)">COPIA</span></span></div>`:''}
         ${loc?`<div class="row-item"><span class="text-muted" style="font-size:12px">📍 Indirizzo</span><a href="https://maps.google.com/?q=${encodeURIComponent(loc)}" target="_blank" style="font-size:13px;font-weight:600;color:var(--text);text-decoration:none;text-align:right;max-width:200px;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end">${loc} <span style="font-size:10px;background:rgba(52,152,219,.15);color:var(--info);padding:2px 8px;border-radius:50px">MAPPA</span></a></div>`:''}
