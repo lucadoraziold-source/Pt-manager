@@ -595,7 +595,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
         </div>
       </div>
       <button onclick="confirmReset()" style="background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:50px;padding:11px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">🗑 Cancella tutti i dati</button>
-      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">Active PT Manager · versione 2.2</div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">Active PT Manager · versione 2.4</div>
     </div>
   </div>
 
@@ -1754,36 +1754,10 @@ function generateGDPR(clientId) {
   <div class="sign-box">Firma del Personal Trainer<br><br><br></div>
   <div class="sign-box">Nota: conservare copia firmata<br>ai sensi del GDPR art. 7</div>
 </div>
-<!-- PHOTO VIEWER MODAL -->
-<div id="photo-modal" class="overlay hidden" onclick="this.classList.add('hidden')">
-  <div style="max-width:90vw;max-height:90vh;position:relative" onclick="event.stopPropagation()">
-    <img id="photo-modal-img" src="" style="max-width:90vw;max-height:80vh;border-radius:var(--radius);object-fit:contain">
-    <div id="photo-modal-caption" style="text-align:center;color:var(--muted);font-size:13px;margin-top:10px"></div>
-    <button onclick="document.getElementById('photo-modal').classList.add('hidden')" style="position:absolute;top:-16px;right:-16px;background:var(--danger);border:none;color:#fff;border-radius:50%;width:32px;height:32px;font-size:16px;cursor:pointer">✕</button>
-  </div>
-</div>
-
-<!-- GLOBAL SEARCH -->
-<div id="global-search-overlay" class="hidden" style="position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:2000;padding:20px;backdrop-filter:blur(4px)" onclick="this.classList.add('hidden')">
-  <div style="max-width:600px;margin:0 auto" onclick="event.stopPropagation()">
-    <div style="position:relative;margin-bottom:16px">
-      <input id="global-search-input" type="text" placeholder="Cerca clienti, sessioni, pacchetti..." oninput="globalSearch(this.value)"
-        style="border-radius:50px;padding:14px 20px;font-size:16px;border-color:var(--accent);background:var(--surface)">
-      <button onclick="document.getElementById('global-search-overlay').classList.add('hidden')" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer">✕</button>
-    </div>
-    <div id="global-search-results" style="display:flex;flex-direction:column;gap:8px;max-height:70vh;overflow:auto"></div>
-  </div>
-</div>
 
 </body></html>`;
 
-  const blob = new Blob([html], {type: 'text/html'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'liberatoria-gdpr-' + cl.name.replace(/\s+/g,'-').toLowerCase() + '-' + todayStr() + '.html';
-  a.click();
-  URL.revokeObjectURL(url);
+  showPDFOverlay(html, 'liberatoria-gdpr-' + cl.name.replace(/\s+/g,'-').toLowerCase());
 }
 
 // ─── GOOGLE CALENDAR ─────────────────────────────────────────────────────────
@@ -2832,10 +2806,17 @@ function exportMonthlyReport() {
 
   var rows = transactions.sort(function(a,b){return a.date.localeCompare(b.date);}).map(function(t){
     var cl=clients.find(function(c){return c.id===t.clientId;});
-    return '<tr style="border-bottom:1px solid #eee"><td>'+fmt(t.date)+'</td><td>'+t.description+'</td><td>'+(cl?cl.name:'—')+'</td><td>'+t.method+'</td><td style="text-align:right;color:'+(t.type==='entrata'?'#27ae60':'#e74c3c');+';font-weight:600">'+(t.type==='entrata'?'+':'-')+'€'+Number(t.amount).toFixed(2)+'</td></tr>';
+    var col = t.type==='entrata'?'#27ae60':'#e74c3c';
+    var sign = t.type==='entrata'?'+':'-';
+    return '<div class="tx-card">'
+      +'<div class="tx-top"><span class="tx-date">'+fmt(t.date)+'</span>'
+      +'<span class="tx-amt" style="color:'+col+'">'+sign+'€'+Number(t.amount).toFixed(2)+'</span></div>'
+      +'<div class="tx-desc">'+t.description+'</div>'
+      +'<div class="tx-meta">'+(cl?cl.name:'—')+' · '+t.method+'</div>'
+      +'</div>';
   }).join('');
 
-  var html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Helvetica Neue,Arial,sans-serif;padding:32px;color:#1a1a1a;font-size:13px}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ff6b00;padding-bottom:16px;margin-bottom:24px}.logo{font-size:36px;font-weight:900;color:#ff6b00;letter-spacing:3px}.period{text-align:right;font-size:13px;color:#666}.period strong{font-size:18px;color:#1a1a1a;display:block}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.kpi{background:#f9f9f9;border-radius:8px;padding:14px 16px;text-align:center}.kpi .val{font-size:24px;font-weight:800;margin:6px 0}.kpi .lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px}table{width:100%;border-collapse:collapse}th{background:#ff6b00;color:#fff;padding:10px 12px;text-align:left;font-size:12px}td{padding:9px 12px;font-size:12px}.footer{margin-top:28px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#999;text-align:center}.print-btn{position:fixed;top:16px;right:16px;background:#ff6b00;color:#fff;border:none;padding:10px 20px;border-radius:50px;font-weight:700;cursor:pointer;font-size:13px}@media print{.print-btn{display:none}}</style></head><body>'
+  var html = '<!DOCTYPE html><html lang="it"><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Helvetica Neue,Arial,sans-serif;padding:32px;color:#1a1a1a;font-size:13px}.header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #ff6b00;padding-bottom:16px;margin-bottom:24px}.logo{font-size:36px;font-weight:900;color:#ff6b00;letter-spacing:3px}.period{text-align:right;font-size:13px;color:#666}.period strong{font-size:18px;color:#1a1a1a;display:block}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.kpi{background:#f9f9f9;border-radius:8px;padding:14px 16px;text-align:center}.kpi .val{font-size:24px;font-weight:800;margin:6px 0}.kpi .lbl{font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px}table{width:100%;border-collapse:collapse}th{background:#ff6b00;color:#fff;padding:10px 12px;text-align:left;font-size:12px}td{padding:9px 12px;font-size:12px}.footer{margin-top:28px;padding-top:16px;border-top:1px solid #eee;font-size:11px;color:#999;text-align:center}.tx-card{border:1px solid #eee;border-radius:10px;padding:12px 14px;margin-bottom:10px;background:#fff}.tx-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}.tx-date{font-size:12px;color:#888;font-weight:600}.tx-amt{font-size:16px;font-weight:800}.tx-desc{font-size:14px;font-weight:600;color:#1a1a1a;margin-bottom:2px}.tx-meta{font-size:12px;color:#666}.tx-total{display:flex;justify-content:space-between;align-items:center;background:#1a1a1a;color:#fff;border-radius:10px;padding:14px 16px;margin-top:14px;font-weight:700}.print-btn{position:fixed;top:16px;right:16px;background:#ff6b00;color:#fff;border:none;padding:10px 20px;border-radius:50px;font-weight:700;cursor:pointer;font-size:13px}@media print{.print-btn{display:none}}</style></head><body>'
   +'<button class="print-btn" onclick="window.print()">🖨 Stampa PDF</button>'
   +'<div class="header"><div><div class="logo">ACTIVE PT</div>'+(profile.name?'<div style="margin-top:4px;font-size:13px;color:#666">'+profile.name+'</div>':'')+'</div>'
   +'<div class="period"><strong>'+MESI[m]+' '+y+'</strong>Report mensile</div></div>'
@@ -2847,9 +2828,10 @@ function exportMonthlyReport() {
   +'<div class="kpi"><div class="lbl">Clienti attivi</div><div class="val">'+new Set(sessions.map(function(s){return s.clientId;})).size+'</div></div>'
   +'<div class="kpi"><div class="lbl">Transazioni</div><div class="val">'+transactions.length+'</div></div>'
   +'</div>'
-  +'<table><thead><tr><th>Data</th><th>Descrizione</th><th>Cliente</th><th>Metodo</th><th style="text-align:right">Importo</th></tr></thead><tbody>'+rows+'</tbody>'
-  +'<tfoot><tr style="background:#f9f9f9"><td colspan="4" style="padding:10px 12px;font-weight:700">TOTALE NETTO</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:'+(income-expense>=0?'#27ae60':'#e74c3c')+'">€'+(income-expense).toFixed(2)+'</td></tr></tfoot></table>'
-  +'<div class="footer">Report generato da PT Manager · '+new Date().toLocaleDateString('it-IT')+'</div>'
+  +'<div style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:1px;font-weight:700;margin-bottom:10px">Movimenti del mese</div>'
+  +(rows||'<div style="color:#999;text-align:center;padding:20px">Nessun movimento</div>')
+  +'<div class="tx-total"><span>TOTALE NETTO</span><span style="color:'+(income-expense>=0?'#2ecc71':'#ff6b6b')+'">€'+(income-expense).toFixed(2)+'</span></div>'
+  +'<div class="footer">Report generato da Active PT Manager · '+new Date().toLocaleDateString('it-IT')+'</div>'
   +'</body></html>';
 
   showPDFOverlay(html, 'report-'+MESI[m].toLowerCase()+'-'+y);
