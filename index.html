@@ -595,7 +595,7 @@ input[type="time"]:focus::-webkit-calendar-picker-indicator {
         </div>
       </div>
       <button onclick="confirmReset()" style="background:transparent;color:var(--danger);border:1.5px solid var(--danger);border-radius:50px;padding:11px 22px;font-size:13px;font-weight:600;font-family:inherit;cursor:pointer;width:100%">🗑 Cancella tutti i dati</button>
-      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">Active PT Manager · versione 2.5</div>
+      <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--muted)">Active PT Manager · versione 2.6</div>
     </div>
   </div>
 
@@ -1049,7 +1049,7 @@ function renderClientDetail(id){
       <div class="card">
         <div class="bebas" style="font-size:13px;letter-spacing:3px;margin-bottom:14px;color:var(--accent)">DATI PERSONALI</div>
         ${cl.phone?`<div class="row-item"><span class="text-muted" style="font-size:12px">📞 Telefono</span><a href="tel:${cl.phone}" style="font-size:14px;font-weight:600;color:var(--accent);text-decoration:none;display:flex;align-items:center;gap:6px">${cl.phone} <span style="font-size:10px;background:rgba(255,107,0,.15);padding:2px 8px;border-radius:50px">CHIAMA</span></a></div>`:''}
-        ${cl.phone?`<div class="row-item"><span class="text-muted" style="font-size:12px">💬 WhatsApp</span><a href="https://wa.me/${cl.phone.replace(/[^0-9]/g,'')}" target="_blank" style="font-size:14px;font-weight:600;color:#25D366;text-decoration:none;display:flex;align-items:center;gap:6px">${cl.phone} <span style="font-size:10px;background:rgba(37,211,102,.15);padding:2px 8px;border-radius:50px">APRI</span></a></div>`:''}
+        ${cl.phone?`<div class="row-item"><span class="text-muted" style="font-size:12px">💬 WhatsApp</span><a href="https://wa.me/${waNumber(cl.phone)}" target="_blank" style="font-size:14px;font-weight:600;color:#25D366;text-decoration:none;display:flex;align-items:center;gap:6px">${cl.phone} <span style="font-size:10px;background:rgba(37,211,102,.15);padding:2px 8px;border-radius:50px">APRI</span></a></div>`:''}
         ${cl.email?`<div class="row-item"><span class="text-muted" style="font-size:12px">📧 Email</span><a href="mailto:${cl.email}" style="font-size:13px;font-weight:600;color:var(--info);text-decoration:none;display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:flex-end;max-width:62%"><span style="word-break:break-all">${cl.email}</span> <span style="font-size:10px;background:rgba(52,152,219,.15);padding:2px 8px;border-radius:50px;white-space:nowrap;flex-shrink:0">SCRIVI</span></a></div>`:''}
         ${cl.birthdate?`<div class="row-item"><span class="text-muted" style="font-size:12px">🎂 Data di nascita</span><span style="font-size:14px;font-weight:600">${fmt(cl.birthdate)} ${(()=>{const b=new Date(cl.birthdate);const today=new Date();let age=today.getFullYear()-b.getFullYear();const m=today.getMonth()-b.getMonth();if(m<0||(m===0&&today.getDate()<b.getDate()))age--;return '<span style="font-size:12px;color:var(--muted);font-weight:400">('+age+' anni)</span>';})()}</span></div>`:''}
         ${cl.cf?`<div class="row-item"><span class="text-muted" style="font-size:12px">🪪 Codice fiscale</span><span style="font-size:14px;font-weight:600;letter-spacing:1px;cursor:pointer" onclick="navigator.clipboard&&navigator.clipboard.writeText('${cl.cf}').then(()=>{this.style.color='var(--success)';setTimeout(()=>this.style.color='',1200)})" title="Tocca per copiare">${cl.cf} <span style="font-size:10px;background:rgba(136,136,170,.12);padding:2px 8px;border-radius:50px;color:var(--muted)">COPIA</span></span></div>`:''}
@@ -1336,6 +1336,7 @@ function exportBackup() {
     deductions: DB.deductions,
     payments: DB.payments,
     profile: JSON.parse(localStorage.getItem('pt_profile')||'{}'),
+    waTemplates: JSON.parse(localStorage.getItem('pt_wa_templates')||'{}'),
     photos: DB.photos,
     leads: DB.leads,
   };
@@ -1368,6 +1369,8 @@ function importBackup(event) {
       if (data.payments) DB.payments = data.payments;
       if (data.leads) DB.leads = data.leads;
       if (data.photos) DB.photos = data.photos;
+      if (data.profile) localStorage.setItem('pt_profile', JSON.stringify(data.profile));
+      if (data.waTemplates) localStorage.setItem('pt_wa_templates', JSON.stringify(data.waTemplates));
       // Also check pt_leads key directly (legacy format)
       if (!data.leads && data.pt_leads) DB.leads = data.pt_leads;
       const st = document.getElementById('backup-status');
@@ -2025,7 +2028,7 @@ function importBackupFromSettings(event) {
   reader.onload = async function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data.version) throw new Error('File non valido');
+      if (!data.version && !data.clients && !data.sessions) throw new Error('File non valido');
       if (!await customConfirm('Sovrascrivere tutti i dati attuali con il backup?','⚠️ RIPRISTINA BACKUP','Sì, ripristina','btn-primary')) return;
       if (data.clients) DB.clients = data.clients;
       if (data.sessions) DB.sessions = data.sessions;
@@ -2035,6 +2038,9 @@ function importBackupFromSettings(event) {
       if (data.payments) DB.payments = data.payments;
       if (data.leads) DB.leads = data.leads;
       if (data.photos) DB.photos = data.photos;
+      if (data.profile) localStorage.setItem('pt_profile', JSON.stringify(data.profile));
+      if (data.waTemplates) localStorage.setItem('pt_wa_templates', JSON.stringify(data.waTemplates));
+      if (!data.leads && data.pt_leads) DB.leads = data.pt_leads;
       const st = document.getElementById('settings-backup-status');
       st.style.display = 'block';
       st.style.background = 'rgba(46,204,113,.12)';
@@ -2092,8 +2098,18 @@ async function deletePhoto(clientId, photoId) {
 }
 
 // ─── WHATSAPP ─────────────────────────────────────────────────────────────────
+function waNumber(phone) {
+  // Normalize an Italian phone number for wa.me (needs country code, no +)
+  var clean = (phone||'').replace(/[^0-9+]/g, '');
+  if (clean.indexOf('+') === 0) { return clean.substring(1); }       // +39... -> 39...
+  if (clean.indexOf('00') === 0) { return clean.substring(2); }      // 0039... -> 39...
+  if (clean.indexOf('39') === 0 && clean.length >= 11) { return clean; } // already 39...
+  // bare Italian mobile/landline -> prepend 39
+  return '39' + clean;
+}
+
 function sendWhatsApp(phone, name, date, time, type) {
-  const clean = phone.replace(/[^0-9+]/g, '');
+  const clean = waNumber(phone);
   let msg = '';
   if (type === 'reminder') {
     // Generic reminder
@@ -2601,7 +2617,7 @@ function renderLeads(){
     if(l.freeLesson){var fl=document.createElement('div');var flC=l.freeLesson==='si'?'var(--success)':l.freeLesson==='no'?'var(--danger)':'var(--warning)';var flT=l.freeLesson==='si'?'✅ Free eseguita':l.freeLesson==='no'?'❌ Free non eseguita':'📅 Free programmata';fl.style.cssText='display:inline-block;font-size:11px;font-weight:700;margin-top:6px;padding:4px 12px;border-radius:50px;background:'+flC.replace('var(--success)','rgba(46,204,113,.15)').replace('var(--danger)','rgba(255,59,59,.15)').replace('var(--warning)','rgba(243,156,18,.15)')+';color:'+flC;fl.textContent=flT+(l.freeLessonDate?' — '+fmt(l.freeLessonDate):'');card.appendChild(fl);}
     if(l.notes){var d=document.createElement('div');d.style.cssText='font-size:12px;color:var(--muted);font-style:italic;margin-top:6px;padding:8px;background:var(--surface2);border-radius:8px';d.textContent='"'+l.notes+'"';card.appendChild(d);}
     var row=document.createElement('div');row.style.cssText='display:flex;gap:6px;margin-top:10px;flex-wrap:wrap';
-    if(l.phone){var bw=document.createElement('button');bw.textContent='💬 WA';bw.style.cssText='flex:1;background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(p,n){bw.onclick=function(e){e.stopPropagation();var tmpl=getWATemplate('lead').replace('{nome}',n);window.open('https://wa.me/'+p.replace(/[^0-9+]/g,'')+'?text='+encodeURIComponent(tmpl),'_blank');};})(l.phone,l.name.split(' ')[0]);row.appendChild(bw);}
+    if(l.phone){var bw=document.createElement('button');bw.textContent='💬 WA';bw.style.cssText='flex:1;background:rgba(37,211,102,.1);border:1.5px solid #25D366;color:#25D366;border-radius:50px;padding:9px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit';(function(p,n){bw.onclick=function(e){e.stopPropagation();var tmpl=getWATemplate('lead').replace('{nome}',n);window.open('https://wa.me/'+waNumber(p)+'?text='+encodeURIComponent(tmpl),'_blank');};})(l.phone,l.name.split(' ')[0]);row.appendChild(bw);}
     var isG=l.status==='gestito';
     // Pulsante GESTITO
     var bg=document.createElement('button');
@@ -2774,8 +2790,7 @@ function sendWhatsAppSession(session) {
     .replace('{data}', fmt(session.date))
     .replace('{ora}', session.time||'')
     .replace('{durata}', (session.duration||60)+'min');
-  var clean = cl.phone.replace(/[^0-9+]/g,'');
-  window.open('https://wa.me/'+clean+'?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://wa.me/'+waNumber(cl.phone)+'?text='+encodeURIComponent(msg),'_blank');
 }
 
 function sendWhatsAppPayment(clientId, pkgName, amount) {
@@ -2786,8 +2801,7 @@ function sendWhatsAppPayment(clientId, pkgName, amount) {
     .replace('{nome}', cl.name.split(' ')[0])
     .replace('{importo}', fmtMoney(amount))
     .replace('{pacchetto}', pkgName||'');
-  var clean = cl.phone.replace(/[^0-9+]/g,'');
-  window.open('https://wa.me/'+clean+'?text='+encodeURIComponent(msg),'_blank');
+  window.open('https://wa.me/'+waNumber(cl.phone)+'?text='+encodeURIComponent(msg),'_blank');
 }
 
 // ─── MONTHLY REPORT PDF ───────────────────────────────────────────────────────
@@ -2864,7 +2878,8 @@ function autoSnapshot() {
       clients: DB.clients, sessions: DB.sessions, packages: DB.packages,
       transactions: DB.transactions, deductions: DB.deductions,
       payments: DB.payments, photos: DB.photos, leads: DB.leads,
-      profile: JSON.parse(localStorage.getItem('pt_profile')||'{}')
+      profile: JSON.parse(localStorage.getItem('pt_profile')||'{}'),
+      waTemplates: JSON.parse(localStorage.getItem('pt_wa_templates')||'{}')
     };
     localStorage.setItem('pt_auto_snapshot', JSON.stringify(snap));
   } catch(e) {}
@@ -2884,6 +2899,7 @@ function restoreSnapshot() {
     if (d.photos) DB.photos = d.photos;
     if (d.leads) DB.leads = d.leads;
     if (d.profile) localStorage.setItem('pt_profile', JSON.stringify(d.profile));
+    if (d.waTemplates) localStorage.setItem('pt_wa_templates', JSON.stringify(d.waTemplates));
     alert('✅ Dati ripristinati dallo snapshot del ' + new Date(d.savedAt).toLocaleString('it-IT'));
     renderPage(currentPage);
   } catch(e) { alert('Errore nel ripristino snapshot.'); }
